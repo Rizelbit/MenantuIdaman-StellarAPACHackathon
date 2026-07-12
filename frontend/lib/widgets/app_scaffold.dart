@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../app/theme.dart';
 import 'buttons.dart';
 
@@ -25,25 +26,38 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final body = Padding(padding: AppSpacing.screen, child: child);
-    return Scaffold(
-      appBar: title == null
-          ? null
-          : AppBar(title: Text(title!), actions: actions, leading: leading),
-      body: SafeArea(
-        top: title == null,
-        child: scrollable
-            ? SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-                child: body)
-            : body,
+    final bottomBar = bottom;
+    // Depth without flatness: the soft near black gradient is painted once here,
+    // behind every screen. Scaffold sits transparent on top so it shows through.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: AppColors.bgBottom,
       ),
-      bottomNavigationBar: bottom == null
-          ? null
-          : SafeArea(
-              minimum: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
-              child: bottom,
-            ),
+      child: Container(
+        decoration: const BoxDecoration(gradient: appBackgroundGradient),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: title == null
+              ? null
+              : AppBar(title: Text(title!), actions: actions, leading: leading),
+          body: SafeArea(
+            top: title == null,
+            child: scrollable
+                ? SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                    child: body)
+                : body,
+          ),
+          bottomNavigationBar: bottomBar == null
+              ? null
+              : SafeArea(
+                  minimum: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+                  child: bottomBar,
+                ),
+        ),
+      ),
     );
   }
 }

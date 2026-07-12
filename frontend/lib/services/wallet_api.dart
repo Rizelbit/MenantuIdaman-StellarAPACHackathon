@@ -114,7 +114,7 @@ class WalletApi {
       }
       return Err(AppFailure('Gagal memproses. Coba lagi.', cause: e));
     } catch (e) {
-      return Err(AppFailure.generic);
+      return const Err(AppFailure.generic);
     }
   }
 }
