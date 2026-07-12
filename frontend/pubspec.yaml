@@ -11,8 +11,8 @@ dependencies:
     sdk: flutter
 
   # State & navigation
-  flutter_riverpod: ^2.5.1
-  go_router: ^14.2.0
+  flutter_riverpod: ^3.3.2
+  go_router: ^17.3.0
 
   # Passkey native (iOS AuthenticationServices / Android Credential Manager).
   # PIN versi yang terbukti jalan saat integrasi — API package ini masih berkembang.
@@ -22,19 +22,19 @@ dependencies:
   dio: ^5.5.0
 
   # Formatting Rp / $ / tanggal (locale id_ID)
-  intl: ^0.19.0
+  intl: ^0.20.3
 
   # Tipografi brand: Plus Jakarta Sans (design system §4)
-  google_fonts: ^6.2.1
+  google_fonts: ^8.1.0
 
   # OPSIONAL: fallback UX biometrik saja (BUKAN pengganti passkey/secp256r1)
-  local_auth: ^2.2.0
+  local_auth: ^3.0.2
 
   # Ikon
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
-  flutter_lints: ^4.0.0
+  flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
 
