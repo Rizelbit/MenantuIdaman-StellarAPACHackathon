@@ -1,6 +1,4 @@
 /// Result minimal untuk membedakan sukses vs gagal tanpa lempar exception ke UI.
-/// UI menampilkan [AppFailure.message] apa adanya — jadi pesan ditulis dari sisi
-/// user ("Koneksi terputus, coba lagi"), bukan sisi sistem ("SocketException").
 sealed class Result<T> {
   const Result();
   R when<R>({
