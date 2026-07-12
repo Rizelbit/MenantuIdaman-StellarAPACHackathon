@@ -34,19 +34,25 @@ class OnboardingScreen extends ConsumerWidget {
 
     return AppScaffold(
       scrollable: false,
-      child: Column(
+      bottom: PrimaryButton(
+        label: 'Buat akun dengan Face ID',
+        icon: Icons.face_retouching_natural,
+        loading: loading,
+        onPressed: () => _register(context, ref),
+      ),
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Spacer(),
-          const Text('Kirim uang ke keluarga,\ncukup pakai Face ID.',
+          Spacer(),
+          Text('Kirim uang ke keluarga,\ncukup pakai Face ID.',
               style: AppText.h1),
-          const SizedBox(height: AppSpacing.md),
-          const Text(
+          SizedBox(height: AppSpacing.md),
+          Text(
             'Tanpa kata sandi rumit, tanpa kartu. Buat akun sekali sentuh — '
             'uang sampai ke rekening keluarga dalam hitungan detik.',
             style: AppText.bodyMuted,
           ),
-          const Spacer(flex: 2),
+          Spacer(flex: 2),
           _AssurancePoint(
               icon: Icons.verified_user_outlined,
               text: 'Aman dengan sidik jari / wajahmu'),
@@ -55,14 +61,8 @@ class OnboardingScreen extends ConsumerWidget {
           _AssurancePoint(
               icon: Icons.receipt_long_outlined,
               text: 'Biaya jelas sebelum kamu kirim'),
-          const Spacer(),
+          Spacer(),
         ],
-      ),
-      bottom: PrimaryButton(
-        label: 'Buat akun dengan Face ID',
-        icon: Icons.face_retouching_natural,
-        loading: loading,
-        onPressed: () => _register(context, ref),
       ),
     );
   }

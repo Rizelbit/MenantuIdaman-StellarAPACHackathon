@@ -23,6 +23,10 @@ class ReceiveScreen extends StatelessWidget {
       title: 'Terima',
       leading: BackButton(onPressed: () => context.goNamed(Routes.home)),
       scrollable: false,
+      bottom: PrimaryButton(
+        label: 'Kembali ke beranda',
+        onPressed: () => context.goNamed(Routes.home),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -42,8 +46,8 @@ class ReceiveScreen extends StatelessWidget {
           const Text('ke rekening $bankLabel',
               style: AppText.bodyMuted, textAlign: TextAlign.center),
           const SizedBox(height: AppSpacing.xl),
-          Card(
-            child: const Padding(
+          const Card(
+            child: Padding(
               padding: EdgeInsets.all(AppSpacing.lg),
               child: Row(
                 children: [
@@ -60,10 +64,6 @@ class ReceiveScreen extends StatelessWidget {
           ),
           const Spacer(),
         ],
-      ),
-      bottom: PrimaryButton(
-        label: 'Kembali ke beranda',
-        onPressed: () => context.goNamed(Routes.home),
       ),
     );
   }

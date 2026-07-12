@@ -48,15 +48,20 @@ class SendReviewScreen extends ConsumerWidget {
         send.phase == SendPhase.signing || send.phase == SendPhase.submitting;
 
     if (quote == null) {
-      return AppScaffold(
+      return const AppScaffold(
         title: 'Periksa kiriman',
-        child: const SizedBox.shrink(),
+        child: SizedBox.shrink(),
       );
     }
 
     return AppScaffold(
       title: 'Periksa kiriman',
       leading: BackButton(onPressed: () => context.goNamed(Routes.sendAmount)),
+      bottom: PrimaryButton(
+        label: busy ? 'Mengirim…' : 'Kirim sekarang',
+        loading: busy,
+        onPressed: busy ? null : () => _confirm(context, ref),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -65,20 +70,15 @@ class SendReviewScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xl),
           FeeBreakdownCard(quote: quote),
           const SizedBox(height: AppSpacing.lg),
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.schedule,
+              Icon(Icons.schedule,
                   size: 18, color: AppColors.textSecondary),
-              const SizedBox(width: AppSpacing.sm),
+              SizedBox(width: AppSpacing.sm),
               Text('Sampai dalam beberapa detik', style: AppText.bodyMuted),
             ],
           ),
         ],
-      ),
-      bottom: PrimaryButton(
-        label: busy ? 'Mengirim…' : 'Kirim sekarang',
-        loading: busy,
-        onPressed: busy ? null : () => _confirm(context, ref),
       ),
     );
   }

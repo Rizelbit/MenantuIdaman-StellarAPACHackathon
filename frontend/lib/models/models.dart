@@ -1,5 +1,6 @@
 /// Model data ringan untuk MVP. Tidak ada satu pun istilah crypto yang bocor ke
 /// UI dari sini — field on-chain (contractAddress) hanya dipakai internal.
+library;
 
 class Wallet {
   final String userId;

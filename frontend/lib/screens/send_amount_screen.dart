@@ -23,6 +23,15 @@ class SendAmountScreen extends ConsumerWidget {
     return AppScaffold(
       title: 'Kirim uang',
       leading: BackButton(onPressed: () => context.goNamed(Routes.home)),
+      bottom: PrimaryButton(
+        label: 'Lanjut',
+        onPressed: canContinue
+            ? () {
+                ctrl.goToReview();
+                context.goNamed(Routes.sendReview);
+              }
+            : null,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -47,15 +56,6 @@ class SendAmountScreen extends ConsumerWidget {
               ),
             ),
         ],
-      ),
-      bottom: PrimaryButton(
-        label: 'Lanjut',
-        onPressed: canContinue
-            ? () {
-                ctrl.goToReview();
-                context.goNamed(Routes.sendReview);
-              }
-            : null,
       ),
     );
   }

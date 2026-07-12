@@ -1,5 +1,5 @@
 import 'package:passkeys/authenticator.dart';
-import 'package:passkeys/types.dart';
+import 'package:passkeys/types.dart' hide Result;
 
 import '../app/env.dart';
 import '../core/result.dart';
@@ -46,7 +46,7 @@ class PasskeyService {
             residentKey: 'required',
             userVerification: 'required',
           ),
-          pubKeyCredParams: const [
+          pubKeyCredParams: [
             // -7 = ES256 (secp256r1) — yang diverifikasi smart wallet Stellar
             PubKeyCredParamType(type: 'public-key', alg: -7),
           ],
