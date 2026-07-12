@@ -48,6 +48,82 @@ class ErrorView extends StatelessWidget {
       );
 }
 
+/// Skeleton shimmer (design system §6.11) untuk loading konten > ~300ms —
+/// bukan spinner di layar kosong. Susun beberapa untuk meniru bentuk konten.
+/// Hormati reduced-motion (§7): jadi kotak diam bila animasi dimatikan.
+class Skeleton extends StatefulWidget {
+  final double? width;
+  final double height;
+  final double radius;
+  const Skeleton({
+    super.key,
+    this.width,
+    this.height = 16,
+    this.radius = AppRadii.sm,
+  });
+
+  @override
+  State<Skeleton> createState() => _SkeletonState();
+}
+
+class _SkeletonState extends State<Skeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduceMotion) {
+      return Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(widget.radius),
+        ),
+      );
+    }
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, _) {
+        final dx = (_c.value * 2) - 1; // pita cahaya bergerak kiri → kanan
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.radius),
+            gradient: LinearGradient(
+              begin: Alignment(dx - 0.3, 0),
+              end: Alignment(dx + 0.3, 0),
+              colors: const [
+                AppColors.surfaceAlt,
+                AppColors.surface3,
+                AppColors.surfaceAlt,
+              ],
+              stops: const [0.35, 0.5, 0.65],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class EmptyView extends StatelessWidget {
   final IconData icon;
   final String title;
