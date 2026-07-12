@@ -91,14 +91,28 @@ class _PrimaryButtonState extends State<PrimaryButton> {
 }
 
 /// Tombol sekunder (design system §6.2): transparan, garis hairlineStrong, teks
-/// terang. Untuk "Batal", "Nanti saja" — tidak pernah bersaing dengan CTA kuning.
+/// terang. Untuk "Batal", "Nanti saja", "Terima" — tidak pernah bersaing dengan
+/// CTA kuning. Ikon opsional untuk aksi yang berpasangan dengan tombol utama.
 class GhostButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
-  const GhostButton({super.key, required this.label, this.onPressed});
+  final IconData? icon;
+  const GhostButton({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (icon != null) {
+      return OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: AppIconSize.md),
+        label: Text(label),
+      );
+    }
     return OutlinedButton(onPressed: onPressed, child: Text(label));
   }
 }
