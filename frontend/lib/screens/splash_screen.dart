@@ -8,16 +8,20 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.send_rounded, size: 56, color: AppColors.primary),
-            SizedBox(height: AppSpacing.lg),
-            Text('Kirimin', style: AppText.h1),
-          ],
+    // Ground yang sama dengan seluruh app: gradient near-black, bukan fill datar.
+    return const DecoratedBox(
+      decoration: BoxDecoration(gradient: appBackgroundGradient),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.send_rounded, size: 56, color: AppColors.primary),
+              SizedBox(height: AppSpacing.lg),
+              Text('Kirimin', style: AppText.h1),
+            ],
+          ),
         ),
       ),
     );
