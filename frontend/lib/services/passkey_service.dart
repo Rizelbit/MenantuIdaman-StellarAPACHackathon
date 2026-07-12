@@ -47,6 +47,7 @@ class PasskeyService {
             userVerification: 'required',
           ),
           pubKeyCredParams: [
+            // -7 = ES256 (secp256r1) — yang diverifikasi smart wallet Stellar
             PubKeyCredParamType(type: 'public-key', alg: -7),
           ],
           excludeCredentials: const [],

@@ -18,6 +18,13 @@ class SendSuccessScreen extends ConsumerWidget {
 
     return AppScaffold(
       scrollable: false,
+      bottom: PrimaryButton(
+        label: 'Selesai',
+        onPressed: () {
+          ref.read(sendControllerProvider.notifier).reset();
+          context.goNamed(Routes.home);
+        },
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -42,13 +49,6 @@ class SendSuccessScreen extends ConsumerWidget {
             ),
           const Spacer(),
         ],
-      ),
-      bottom: PrimaryButton(
-        label: 'Selesai',
-        onPressed: () {
-          ref.read(sendControllerProvider.notifier).reset();
-          context.goNamed(Routes.home);
-        },
       ),
     );
   }
