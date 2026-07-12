@@ -24,6 +24,9 @@ dependencies:
   # Formatting Rp / $ / tanggal (locale id_ID)
   intl: ^0.19.0
 
+  # Tipografi brand: Plus Jakarta Sans (design system §4)
+  google_fonts: ^6.2.1
+
   # OPSIONAL: fallback UX biometrik saja (BUKAN pengganti passkey/secp256r1)
   local_auth: ^2.2.0
 

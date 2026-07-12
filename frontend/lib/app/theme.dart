@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// ============================================================================
 /// DESIGN TOKENS — Kirimin (dark, minimal, sleek)
@@ -115,12 +116,13 @@ class AppIconSize {
 }
 
 /// Skala tipografi. Nama-role, bukan ukuran, supaya screen tetap konsisten.
-/// Family default dibiarkan null (pakai default platform). Design system menyebut
-/// Plus Jakarta Sans (fallback Inter) via google_fonts — langkah terpisah karena
-/// menambah dependency + `pub get`. Skala di bawah sudah final.
+/// Family sengaja dibiarkan null di sini: keluarga font (Plus Jakarta Sans,
+/// design system §4) di-inject sekali di [buildAppTheme] lewat google_fonts,
+/// lalu mengalir ke seluruh teks via DefaultTextStyle + theme. Style ini tetap
+/// `const` supaya screen yang memakai `const Text(style: AppText.x)` tak pecah.
 class AppText {
   AppText._();
-  static const _family = null; // TODO: 'PlusJakartaSans' via google_fonts
+  static const _family = null; // di-isi via theme (google_fonts), lihat buildAppTheme
 
   static const displayMoney = TextStyle(
     fontFamily: _family,
@@ -192,6 +194,11 @@ class AppText {
 
 /// ThemeData tunggal (dark) — dipakai di MaterialApp.router.
 ThemeData buildAppTheme() {
+  // Plus Jakarta Sans (§4). Di-inject sekali di sini; AppText tetap null-family
+  // dan mewarisi keluarga ini lewat DefaultTextStyle + theme.
+  final family = GoogleFonts.plusJakartaSans().fontFamily;
+  TextStyle f(TextStyle s) => s.copyWith(fontFamily: family);
+
   final scheme = ColorScheme.fromSeed(
     seedColor: AppColors.primary,
     brightness: Brightness.dark,
@@ -212,17 +219,18 @@ ThemeData buildAppTheme() {
     useMaterial3: true,
     brightness: Brightness.dark,
     colorScheme: scheme,
+    fontFamily: family,
     // Gradient is painted by AppScaffold; bgBase is the solid fallback.
     scaffoldBackgroundColor: AppColors.bgBase,
     canvasColor: AppColors.bgBase,
     splashFactory: InkRipple.splashFactory,
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent, // let the gradient show through
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: AppText.h2,
+      titleTextStyle: f(AppText.h2),
       foregroundColor: AppColors.textPrimary,
     ),
     cardTheme: CardThemeData(
@@ -243,7 +251,7 @@ ThemeData buildAppTheme() {
         disabledForegroundColor: AppColors.textTertiary,
         minimumSize: const Size.fromHeight(56),
         elevation: 0,
-        textStyle: AppText.button,
+        textStyle: f(AppText.button),
         shape: RoundedRectangleBorder(borderRadius: AppRadii.button),
       ),
     ),
@@ -252,14 +260,14 @@ ThemeData buildAppTheme() {
         foregroundColor: AppColors.textPrimary,
         minimumSize: const Size.fromHeight(56),
         side: const BorderSide(color: AppColors.hairlineStrong),
-        textStyle: AppText.title,
+        textStyle: f(AppText.title),
         shape: RoundedRectangleBorder(borderRadius: AppRadii.button),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: AppColors.primary,
-        textStyle: AppText.title,
+        textStyle: f(AppText.title),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -267,8 +275,8 @@ ThemeData buildAppTheme() {
       fillColor: AppColors.surfaceAlt,
       contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
-      hintStyle: AppText.bodyMuted,
-      labelStyle: AppText.label,
+      hintStyle: f(AppText.bodyMuted),
+      labelStyle: f(AppText.label),
       border: OutlineInputBorder(
         borderRadius: AppRadii.button,
         borderSide: const BorderSide(color: AppColors.hairlineStrong),
@@ -308,6 +316,6 @@ ThemeData buildAppTheme() {
       titleMedium: AppText.title,
       bodyMedium: AppText.body,
       labelLarge: AppText.label,
-    ),
+    ).apply(fontFamily: family),
   );
 }
