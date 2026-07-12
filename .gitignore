@@ -57,6 +57,9 @@ logs/
 coverage/
 .nyc_output/
 
+# Sprint secrets (nilai sensitif, bagikan via channel aman)
+sprint/SECRETS.md
+
 # Misc
 *.zip
 *.tar.gz
