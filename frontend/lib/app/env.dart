@@ -20,6 +20,13 @@ class Env {
   /// Nama yang ditampilkan OS saat prompt passkey.
   static const appDisplayName = 'Kirimin';
 
+  /// Mode prototipe: pakai layanan tiruan (mock) sehingga seluruh aplikasi bisa
+  /// dijalankan dan dinavigasi TANPA backend dan TANPA device passkey. Default
+  /// `true` supaya `flutter run` langsung jalan untuk demo UI. Untuk sambung ke
+  /// backend nyata: `--dart-define=USE_MOCK=false` bersama BACKEND_URL & RP_ID.
+  /// Lihat `docs/backend_handoff.md`.
+  static const useMock = bool.fromEnvironment('USE_MOCK', defaultValue: true);
+
   /// Kurs statik (MOCK). Sumber real: SEP-38. 1 USD = Rp berikut.
   static const usdToIdr = 16350.0;
 
