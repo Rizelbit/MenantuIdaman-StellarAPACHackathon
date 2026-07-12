@@ -17,12 +17,17 @@ class TransactionTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Row(
         children: [
+          // Leading: ikon persegi membulat di surface2 dengan garis hairline (§6.9).
           Container(
             height: 44,
             width: 44,
-            decoration: const BoxDecoration(
-                color: AppColors.surfaceAlt, shape: BoxShape.circle),
-            child: const Icon(Icons.north_east, color: AppColors.primary),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(AppRadii.md),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            child: const Icon(Icons.north_east,
+                color: AppColors.primary, size: AppIconSize.lg),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -35,8 +40,12 @@ class TransactionTile extends StatelessWidget {
               ],
             ),
           ),
-          Text(formatMoney(tx.amountIdr, Currency.idr),
-              style: AppText.title),
+          // Nominal keluar: teks terang, angka tabular agar tidak bergeser (§6.9, §4).
+          Text(
+            '- ${formatMoney(tx.amountIdr, Currency.idr)}',
+            style: AppText.title.copyWith(
+                fontFeatures: const [FontFeature.tabularFigures()]),
+          ),
         ],
       ),
     );

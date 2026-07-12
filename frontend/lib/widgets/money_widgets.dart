@@ -81,9 +81,10 @@ class AmountDisplay extends StatelessWidget {
   }
 }
 
-/// ⭐ SIGNATURE ELEMENT — kartu transparansi biaya.
+/// ⭐ SIGNATURE ELEMENT (design system §6.5) — kartu transparansi biaya.
 /// Muncul SEBELUM konfirmasi. Menjawab pain "user tak tahu biaya".
-/// Baris "Keluarga terima" sengaja ditonjolkan (warna + weight).
+/// Tiga baris dengan urutan tetap: Kamu kirim → Keluarga terima (hero, hijau) →
+/// Biaya layanan. Dipisah hairline. Angka terima adalah pusat visual kartu.
 class FeeBreakdownCard extends StatelessWidget {
   final SendQuote quote;
   const FeeBreakdownCard({super.key, required this.quote});
@@ -92,47 +93,51 @@ class FeeBreakdownCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         child: Column(
           children: [
             _row('Kamu kirim', quote.amountLabel),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-              child: Divider(),
-            ),
-            _row('Biaya layanan (${quote.feePercentLabel})', '- ${quote.feeLabel}',
+            const Divider(height: 1),
+            _heroRow('Keluarga terima', quote.receiveLabel),
+            const Divider(height: 1),
+            _row('Biaya layanan (${quote.feePercentLabel})', quote.feeLabel,
                 muted: true),
-            const SizedBox(height: AppSpacing.md),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: AppColors.successSoft,
-                borderRadius: AppRadii.card,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Keluarga terima',
-                      style: AppText.title.copyWith(color: AppColors.success)),
-                  Text(quote.receiveLabel,
-                      style: AppText.h2.copyWith(color: AppColors.success)),
-                ],
-              ),
-            ),
           ],
         ),
       ),
     );
   }
 
+  static TextStyle _tab(TextStyle s) =>
+      s.copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
+
+  // Baris biasa: label kiri, nominal kanan (tabular).
   Widget _row(String label, String value, {bool muted = false}) {
-    final style = muted ? AppText.bodyMuted : AppText.body;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: style),
-        Text(value, style: style.copyWith(fontWeight: FontWeight.w600)),
-      ],
+    final labelStyle = muted ? AppText.bodyMuted : AppText.title;
+    final valueStyle = muted ? AppText.bodyMuted : AppText.title;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: labelStyle),
+          Text(value, style: _tab(valueStyle)),
+        ],
+      ),
+    );
+  }
+
+  // Baris hero: nominal "keluarga terima" ditonjolkan (hijau, lebih besar).
+  Widget _heroRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: AppText.title),
+          Text(value, style: _tab(AppText.h2.copyWith(color: AppColors.success))),
+        ],
+      ),
     );
   }
 }
