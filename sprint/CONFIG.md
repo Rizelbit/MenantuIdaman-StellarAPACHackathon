@@ -9,16 +9,16 @@ File ini menyimpan nilai konfigurasi non-sensitif yang perlu diketahui seluruh t
 
 | Key | Value |
 |-----|-------|
-| **RP_ID** | _(isi setelah S0-01 selesai)_ |
-| **Backend URL** | _(isi setelah S0-01 selesai, format: `https://...`)_ |
+| **RP_ID** | menantuidaman-stellarapachackathon-production.up.railway.app |
+| **Backend URL** | https://menantuidaman-stellarapachackathon-production.up.railway.app |
 
 > ⚠️ **RP_ID TIDAK BOLEH BERUBAH** setelah passkey pertama dibuat. Ganti domain = semua passkey test hangus.
 
 ### Flutter dart-define (salin & isi)
 ```bash
 flutter run \
-  --dart-define=BACKEND_URL=https://<isi-railway-domain> \
-  --dart-define=RP_ID=<isi-railway-domain-tanpa-https>
+  --dart-define=BACKEND_URL=https://menantuidaman-stellarapachackathon-production.up.railway.app \
+  --dart-define=RP_ID=menantuidaman-stellarapachackathon-production.up.railway.app
 ```
 
 ---
@@ -73,7 +73,8 @@ flutter run \
 | Key | Value |
 |-----|-------|
 | **Project Name** | _(isi)_ |
-| **Service URL** | _(sama dengan Backend URL di atas)_ |
+| **Service URL** | https://menantuidaman-stellarapachackathon-production.up.railway.app |
+| **Port** | 8080 |
 | **Root Directory** | `backend` |
 | **Build** | Dockerfile |
 
