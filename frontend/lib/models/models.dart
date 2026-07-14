@@ -38,6 +38,8 @@ class AppTransaction {
 
 enum TxStatus { pending, settled, failed }
 
+enum TxDirection { send, receive, split }
+
 /// Envelope attestation WebAuthn hasil `passkeys.register()` (registrasi).
 /// Diteruskan mentah ke backend; backend (Passkey Kit) yang mem-parsing pubkey.
 class PasskeyAttestation {
