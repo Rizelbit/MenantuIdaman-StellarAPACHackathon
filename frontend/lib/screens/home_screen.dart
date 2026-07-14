@@ -7,6 +7,7 @@ import '../app/router.dart';
 import '../models/models.dart';
 import '../state/home_feed.dart';
 import '../state/send_controller.dart';
+import '../state/split_controller.dart';
 import '../theme/tokens.dart';
 import '../widgets/widgets.dart';
 
@@ -85,7 +86,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _QuickActionsRow(
           onKirim: goSend,
           onMinta: () => context.pushNamed(Routes.requestAmount),
-          onSplit: () => context.pushNamed(Routes.splitCreate),
+          onSplit: () {
+            ref.read(splitControllerProvider.notifier).reset();
+            context.pushNamed(Routes.splitCreate);
+          },
           onTerima: () => context.pushNamed(Routes.receive),
         ),
         const SizedBox(height: KSpace.xl),
