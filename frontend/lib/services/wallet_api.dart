@@ -104,6 +104,60 @@ class WalletApi {
     });
   }
 
+  /// Ambil feed Home (saldo, promo, kontak favorit, transaksi terbaru).
+  /// GET /home/:userId/feed
+  // TODO(handoff): see docs/backend_handoff.md
+  Future<Result<HomeFeed>> getHomeFeed(String userId) {
+    throw UnimplementedError();
+  }
+
+  /// Daftar kontak milik user.
+  /// GET /contacts/:userId
+  // TODO(handoff): see docs/backend_handoff.md
+  Future<Result<List<Contact>>> listContacts(String userId) {
+    throw UnimplementedError();
+  }
+
+  /// Tambah kontak baru.
+  /// POST /contacts  { name, relation, accountRef }
+  // TODO(handoff): see docs/backend_handoff.md
+  Future<Result<Contact>> addContact({
+    required String name,
+    required String relation,
+    required String accountRef,
+  }) {
+    throw UnimplementedError();
+  }
+
+  /// Buat permintaan uang (request) ke kontak.
+  /// POST /requests  { fromContactId, amountIdr, note }
+  // TODO(handoff): see docs/backend_handoff.md
+  Future<Result<MoneyRequest>> createRequest({
+    required String fromContactId,
+    required double amountIdr,
+    String? note,
+  }) {
+    throw UnimplementedError();
+  }
+
+  /// Buat tagihan split baru.
+  /// POST /splits  { title, totalIdr, participants }
+  // TODO(handoff): see docs/backend_handoff.md
+  Future<Result<SplitBill>> createSplit({
+    required String title,
+    required double totalIdr,
+    required List<SplitParticipant> participants,
+  }) {
+    throw UnimplementedError();
+  }
+
+  /// Ambil detail tagihan split.
+  /// GET /splits/:id
+  // TODO(handoff): see docs/backend_handoff.md
+  Future<Result<SplitBill>> getSplit(String id) {
+    throw UnimplementedError();
+  }
+
   /// Bungkus semua call: peta DioException → AppFailure ramah-user.
   Future<Result<T>> _guard<T>(Future<T> Function() run) async {
     try {

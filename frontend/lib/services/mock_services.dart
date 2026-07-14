@@ -1,6 +1,7 @@
 import '../core/money.dart';
 import '../core/result.dart';
 import '../models/models.dart';
+import 'mock_data.dart';
 import 'passkey_service.dart';
 import 'wallet_api.dart';
 
@@ -24,7 +25,16 @@ class MockWalletApi extends WalletApi {
   MockWalletApi() : super();
 
   /// Saldo contoh (USD). Berkurang tiap kirim supaya Home terasa hidup.
-  double _balanceUsd = 250;
+  /// Setara Rp 4.250.000 supaya Home menampilkan saldo sesuai spec desain.
+  double _balanceUsd = idrToUsd(4250000);
+
+  /// Kontak contoh, dimutasi di memori supaya [addContact] terlihat persisten
+  /// selama sesi (bukan dibuat ulang tiap panggilan).
+  final List<Contact> _contacts = seedContacts();
+
+  /// Tagihan split yang dibuat lewat [createSplit], supaya [getSplit] bisa
+  /// mengembalikannya kembali selama sesi.
+  final Map<String, SplitBill> _splits = {};
 
   /// Padanan `GET /passkey/register-options`.
   @override
@@ -90,6 +100,94 @@ class MockWalletApi extends WalletApi {
   Future<Result<double>> getBalanceUsd(String userId) async {
     await Future<void>.delayed(_mockDelay);
     return Ok(_balanceUsd);
+  }
+
+  /// Padanan `GET /home/:userId/feed`.
+  @override
+  Future<Result<HomeFeed>> getHomeFeed(String userId) async {
+    await Future<void>.delayed(_mockDelay);
+    return Ok(HomeFeed(
+      balanceIdr: usdToIdr(_balanceUsd),
+      greetingName: 'Rani',
+      accountRef: '•••• 4821',
+      promos: seedPromos(),
+      favoriteContacts: _contacts.where((c) => c.isFavorite).toList(),
+      recentTransactions: seedTransactions(),
+    ));
+  }
+
+  /// Padanan `GET /contacts/:userId`.
+  @override
+  Future<Result<List<Contact>>> listContacts(String userId) async {
+    await Future<void>.delayed(_mockDelay);
+    return Ok(List.of(_contacts));
+  }
+
+  /// Padanan `POST /contacts`. Ditambahkan ke daftar kontak di memori.
+  @override
+  Future<Result<Contact>> addContact({
+    required String name,
+    required String relation,
+    required String accountRef,
+  }) async {
+    await Future<void>.delayed(_mockDelay);
+    final upper = name.trim().toUpperCase();
+    final initials =
+        upper.length >= 2 ? upper.substring(0, 2) : upper.padRight(2);
+    final contact = Contact(
+      id: 'c${_contacts.length + 1}',
+      name: name,
+      relation: relation,
+      initials: initials,
+      accountRef: accountRef,
+    );
+    _contacts.add(contact);
+    return Ok(contact);
+  }
+
+  /// Padanan `POST /requests`.
+  @override
+  Future<Result<MoneyRequest>> createRequest({
+    required String fromContactId,
+    required double amountIdr,
+    String? note,
+  }) async {
+    await Future<void>.delayed(_mockDelay);
+    return Ok(MoneyRequest(
+      id: 'req${DateTime.now().millisecondsSinceEpoch}',
+      fromContactId: fromContactId,
+      amountIdr: amountIdr,
+      note: note,
+      createdAt: DateTime.now(),
+    ));
+  }
+
+  /// Padanan `POST /splits`. Disimpan di memori supaya [getSplit] bisa
+  /// mengembalikannya kembali.
+  @override
+  Future<Result<SplitBill>> createSplit({
+    required String title,
+    required double totalIdr,
+    required List<SplitParticipant> participants,
+  }) async {
+    await Future<void>.delayed(_mockDelay);
+    final split = SplitBill(
+      id: 'split${DateTime.now().millisecondsSinceEpoch}',
+      title: title,
+      totalIdr: totalIdr,
+      createdAt: DateTime.now(),
+      participants: participants,
+    );
+    _splits[split.id] = split;
+    return Ok(split);
+  }
+
+  /// Padanan `GET /splits/:id`. Kembalikan split yang dibuat sesi ini jika ada,
+  /// jika tidak jatuh balik ke split contoh.
+  @override
+  Future<Result<SplitBill>> getSplit(String id) async {
+    await Future<void>.delayed(_mockDelay);
+    return Ok(_splits[id] ?? seedSplit());
   }
 }
 
