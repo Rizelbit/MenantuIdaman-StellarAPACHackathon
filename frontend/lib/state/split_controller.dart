@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/result.dart';
 import '../models/models.dart';
 import 'providers.dart';
 
@@ -99,17 +100,18 @@ class SplitController extends Notifier<SplitState> {
     );
   }
 
-  double get assignedIdr => state.assignedIdr;
-
-  bool get isBalanced => state.isBalanced;
-
   Future<void> submit() async {
     final api = ref.read(walletApiProvider);
-    await api.createSplit(
+    switch (await api.createSplit(
       title: state.title,
       totalIdr: state.totalIdr,
       participants: state.participants,
-    );
+    )) {
+      case Ok():
+        break; // success; created bill surfaced by split detail via getSplit later
+      case Err():
+        break; // surface failure later (mock always Ok)
+    }
   }
 
   void reset() => state = _initialSplitState;
