@@ -50,10 +50,15 @@ flutter run \
 | **Horizon URL** | `https://horizon-testnet.stellar.org` |
 | **Friendbot URL** | `https://friendbot.stellar.org` |
 | **USDC Testnet Issuer** | `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` |
-| **Factory Contract ID** | _(isi setelah S0-10 selesai)_ |
-| **Deployer Public Key** | _(isi setelah S0-09 selesai)_ |
-| **Demo Sender Public Key** | _(isi setelah S0-12 selesai)_ |
-| **Demo Receiver Public Key** | _(isi setelah S0-12 selesai)_ |
+| **Wallet WASM Hash** (testnet) | `fdefad64b96837147e1c333e51f537b696eab925e9f147e63d597c04e3c903f0` |
+| **Wallet WASM Size** | 34.105 bytes (sudah terupload di testnet, tx: `3507c407…`) |
+| **Canonical Deployer** (passkey-kit v1) | `GC2C7AWLS2FMFTQAHW3IBUB4ZXVP4E37XNLEF2IK7IVXBB6CMEPCSXFO` |
+| **Canonical Deployer Seed** | `sha256("kalepail")` — jangan diubah |
+| **Deployer Public Key** (kita) | `GCLC34ARATQ6OATCJLEOAGTAFTKD45H5VSKNO2EPJQHHNEYNZGJ4OAQ7` |
+| **Demo Sender Public Key** | `GCUA7JMJ7MAWFV2SNFIHGN6XCNEZGIMUMDHSB6QVAPZJEPE666OFID6R` |
+| **Demo Receiver Public Key** | `GCWFVMEWRVLMU7ON4Y7W5UNJUFEWOMEEHJGRZJHEBUWNZNB3A3HCJ2H4` |
+| **Demo Sender Balance** | 1000 testUSD + 10000 XLM (testnet) |
+| **Test USD Issuer** | `GBSE5FGT3TIWD6AUAR2B47FAZWJNI7GSZIGTDFJLLGYQUP5653GCQANS` |
 | **Demo Receiver Contract Address** | _(isi setelah smart wallet penerima dibuat)_ |
 
 ---
@@ -62,8 +67,8 @@ flutter run \
 
 | Package | Version | Notes |
 |---------|---------|-------|
-| Stellar CLI | _(isi)_ | `stellar --version` |
-| PasskeyKit npm package | _(isi nama & versi, hasil S1-01)_ | |
+| Stellar CLI | `27.0.0` | `stellar --version` |
+| PasskeyKit npm package | `passkey-kit@^0.14.0` | v1 arsitektur (no factory contract) |
 | `passkeys` Flutter package | `^2.4.0` | pin setelah S1-06 verified |
 
 ---
@@ -80,9 +85,9 @@ flutter run \
 
 ---
 
-## Launchtube
+## Fee Sponsorship
 
 | Key | Value |
 |-----|-------|
-| **URL** | `https://launchtube.xyz` _(atau URL yang diberikan)_ |
-| **Token** | Di `SECRETS.md` |
+| **Approach** | Backend relayer pakai deployer's XLM (MVP). Upgrade ke OpenZeppelin Channels untuk production. |
+| **Relayer API Key** | _(isi nanti — dari https://channels.openzeppelin.com/testnet/gen)_ |

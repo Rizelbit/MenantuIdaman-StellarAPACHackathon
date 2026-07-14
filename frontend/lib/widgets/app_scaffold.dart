@@ -42,7 +42,7 @@ class AppScaffold extends StatelessWidget {
           : SafeArea(
               minimum: const EdgeInsets.fromLTRB(
                   AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
-              child: bottom,
+              child: bottom!,
             ),
     );
   }

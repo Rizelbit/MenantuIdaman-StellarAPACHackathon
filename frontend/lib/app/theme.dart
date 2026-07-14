@@ -166,7 +166,7 @@ ThemeData buildAppTheme() {
       titleTextStyle: AppText.h2,
       foregroundColor: AppColors.textPrimary,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: AppColors.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
