@@ -44,7 +44,7 @@ void main() {
     final state = container.read(sendControllerProvider);
     expect(state.phase, SendPhase.success);
     expect(state.result, isNotNull);
-    expect(state.result!.recipientName, 'Ibu');
+    expect(state.result!.counterpartyName, 'Ibu');
 
     // Saldo berkurang setelah kirim (mock stateful; saldo awal 250 USD).
     expect(container.read(walletProvider)!.balanceUsd, lessThan(250));
