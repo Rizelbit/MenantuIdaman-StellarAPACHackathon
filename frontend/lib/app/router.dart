@@ -17,6 +17,7 @@ import '../screens/split_create_screen.dart';
 import '../screens/split_shares_screen.dart';
 import '../screens/split_confirm_screen.dart';
 import '../screens/split_detail_screen.dart';
+import '../screens/family_contacts_screen.dart';
 
 /// Nama rute terpusat. Screen navigasi via `context.goNamed(Routes.home)` —
 /// TIDAK dengan string mentah, supaya gampang refactor & agar screen hasil agent
@@ -135,7 +136,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/contacts',
           name: Routes.contacts,
-          builder: (_, __) => _stub('Kontak')),
+          builder: (_, __) => const FamilyContactsScreen()),
       GoRoute(
           path: '/tx/:id',
           name: Routes.txDetail,
