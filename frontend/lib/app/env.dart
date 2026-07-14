@@ -31,7 +31,8 @@ class Env {
   static const usdToIdr = 16350.0;
 
   /// Biaya layanan (MOCK) — ditampilkan sebagai "biaya", bukan "network fee".
-  static const feeRate = 0.005; // 0,5%
+  /// Demo: nol biaya, jadi "mereka terima" == "kamu kirim" di seluruh alur kirim.
+  static const feeRate = 0.0;
 
   /// Kirim ke testnet, bukan mainnet.
   static const stellarNetwork = 'testnet';
