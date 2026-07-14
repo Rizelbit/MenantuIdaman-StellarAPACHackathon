@@ -27,9 +27,9 @@ flutter run \
 
 | Key | Value |
 |-----|-------|
-| **Team ID** | _(isi dari developer.apple.com)_ |
-| **Bundle ID** | _(isi dari Xcode → Signing & Capabilities)_ |
-| **Associated Domains** | `webcredentials:<RP_ID>` |
+| **Team ID** | `PLACEHOLDER` — butuh Apple Developer Program ($99/thn) |
+| **Bundle ID** | `com.example.kirimin` (default Flutter) |
+| **Associated Domains** | `webcredentials:menantuidaman-stellarapachackathon-production.up.railway.app` |
 
 ---
 
@@ -37,8 +37,8 @@ flutter run \
 
 | Key | Value |
 |-----|-------|
-| **Application ID** | _(isi dari `android/app/build.gradle` → `applicationId`)_ |
-| **Debug SHA-256** | _(isi dari `keytool -list -v -keystore ~/.android/debug.keystore ...`)_ |
+| **Application ID** | `com.example.kirimin` (default Flutter, ganti kalau ubah Bundle ID) |
+| **Debug SHA-256** | `54:4E:87:DD:1E:1C:29:A5:D1:A0:2F:65:28:AF:91:67:AC:40:D0:E1:CC:35:61:18:8C:55:9A:16:BA:B4:12:D3` |
 
 ---
 
