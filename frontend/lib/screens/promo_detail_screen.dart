@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../app/router.dart';
 import '../models/models.dart';
 import '../state/home_feed.dart';
+import '../state/split_controller.dart';
 import '../theme/tokens.dart';
 import '../widgets/widgets.dart';
 
@@ -45,9 +46,14 @@ class PromoDetailScreen extends ConsumerWidget {
       title: 'Promo',
       bottom: PrimaryPillButton(
         label: promo.ctaLabel,
-        onPressed: () => promo.deepLink.startsWith('/split')
-            ? context.pushNamed(Routes.splitCreate)
-            : context.goNamed(Routes.home),
+        onPressed: () {
+          if (promo.deepLink.startsWith('/split')) {
+            ref.read(splitControllerProvider.notifier).reset();
+            context.pushNamed(Routes.splitCreate);
+          } else {
+            context.goNamed(Routes.home);
+          }
+        },
       ),
       child: _PromoDetailBody(promo: promo),
     );

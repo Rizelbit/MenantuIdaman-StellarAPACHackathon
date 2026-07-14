@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../app/router.dart';
 import '../core/money.dart';
 import '../core/result.dart';
 import '../models/models.dart';
@@ -35,6 +37,10 @@ class SplitDetailScreen extends ConsumerWidget {
     return async.when(
       data: (bill) => AppScaffold(
         title: bill.title,
+        bottom: PrimaryPillButton(
+          label: 'Selesai',
+          onPressed: () => context.goNamed(Routes.home),
+        ),
         child: _SplitDetailBody(bill: bill),
       ),
       loading: () => const AppScaffold(
