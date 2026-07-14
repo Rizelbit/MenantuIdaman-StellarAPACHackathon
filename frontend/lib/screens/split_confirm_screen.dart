@@ -17,6 +17,9 @@ class SplitConfirmScreen extends ConsumerWidget {
   Future<void> _submit(BuildContext context, WidgetRef ref) async {
     await ref.read(splitControllerProvider.notifier).submit();
     if (!context.mounted) return;
+    // Demo: detail intentionally shows the canonical sample split ('split1',
+    // mid-progress) so the "Ingatkan" nudge state is visible. With a real
+    // backend, navigate to the id returned by submit().
     context.goNamed(Routes.splitDetail, pathParameters: {'id': 'split1'});
   }
 
