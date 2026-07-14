@@ -18,6 +18,8 @@ import '../screens/split_shares_screen.dart';
 import '../screens/split_confirm_screen.dart';
 import '../screens/split_detail_screen.dart';
 import '../screens/family_contacts_screen.dart';
+import '../screens/transaction_detail_screen.dart';
+import '../screens/promo_detail_screen.dart';
 
 /// Nama rute terpusat. Screen navigasi via `context.goNamed(Routes.home)` —
 /// TIDAK dengan string mentah, supaya gampang refactor & agar screen hasil agent
@@ -140,11 +142,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/tx/:id',
           name: Routes.txDetail,
-          builder: (_, __) => _stub('Transaksi')),
+          builder: (_, state) =>
+              TransactionDetailScreen(id: state.pathParameters['id']!)),
       GoRoute(
           path: '/promo/:id',
           name: Routes.promoDetail,
-          builder: (_, __) => _stub('Promo')),
+          builder: (_, state) =>
+              PromoDetailScreen(id: state.pathParameters['id']!)),
       GoRoute(
           path: '/history',
           name: Routes.history,
