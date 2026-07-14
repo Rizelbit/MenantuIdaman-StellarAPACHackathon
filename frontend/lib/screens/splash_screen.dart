@@ -1,25 +1,38 @@
 import 'package:flutter/material.dart';
-import '../app/theme.dart';
+
+import '../theme/tokens.dart';
+import '../widgets/widgets.dart';
 
 /// Splash netral saat router menentukan tujuan (onboarding vs home).
-/// Untuk demo, ganti ikon/nama agar terasa "aplikasi keuangan", bukan crypto.
+/// Router redirects away once auth state resolves — no navigation here.
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Ground yang sama dengan seluruh app: gradient near-black, bukan fill datar.
-    return const DecoratedBox(
-      decoration: BoxDecoration(gradient: appBackgroundGradient),
+    final p = KColors.of(Theme.of(context).brightness);
+    return GlowBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.send_rounded, size: 56, color: AppColors.primary),
-              SizedBox(height: AppSpacing.lg),
-              Text('Kirimin', style: AppText.h1),
+              Container(
+                width: 48,
+                height: 48,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: p.accent, shape: BoxShape.circle),
+                child: const Icon(Icons.arrow_outward, color: Colors.white, size: 24),
+              ),
+              const SizedBox(height: KSpace.lg),
+              Text('Kirimin', style: Theme.of(context).textTheme.headlineLarge),
+              const SizedBox(height: KSpace.xl),
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: p.accent),
+              ),
             ],
           ),
         ),

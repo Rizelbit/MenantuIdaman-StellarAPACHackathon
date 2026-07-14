@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app/router.dart';
-import '../app/theme.dart';
 import '../state/auth_controller.dart';
+import '../theme/tokens.dart';
 import '../widgets/widgets.dart';
 
 /// CONTOH SCREEN TER-WIRE PENUH — pola untuk screen lain.
@@ -31,37 +31,39 @@ class OnboardingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loading = ref.watch(authControllerProvider).isLoading;
+    final textTheme = Theme.of(context).textTheme;
+    final p = KColors.of(Theme.of(context).brightness);
 
     return AppScaffold(
       scrollable: false,
-      bottom: PrimaryButton(
+      bottom: PrimaryPillButton(
         label: 'Buat akun dengan Face ID',
-        icon: Icons.face_retouching_natural,
+        icon: Icons.face,
         loading: loading,
         onPressed: () => _register(context, ref),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Spacer(),
+          const Spacer(),
           Text('Kirim uang ke keluarga,\ncukup pakai Face ID.',
-              style: AppText.h1),
-          SizedBox(height: AppSpacing.md),
+              style: textTheme.headlineLarge),
+          const SizedBox(height: KSpace.md),
           Text(
             'Tanpa kata sandi rumit, tanpa kartu. Buat akun sekali sentuh — '
             'uang sampai ke rekening keluarga dalam hitungan detik.',
-            style: AppText.bodyMuted,
+            style: textTheme.bodyMedium?.copyWith(color: p.inkMuted),
           ),
-          Spacer(flex: 2),
-          _AssurancePoint(
+          const Spacer(flex: 2),
+          const _AssurancePoint(
               icon: Icons.verified_user_outlined,
               text: 'Aman dengan sidik jari / wajahmu'),
-          _AssurancePoint(
+          const _AssurancePoint(
               icon: Icons.bolt_outlined, text: 'Sampai dalam hitungan detik'),
-          _AssurancePoint(
+          const _AssurancePoint(
               icon: Icons.receipt_long_outlined,
               text: 'Biaya jelas sebelum kamu kirim'),
-          Spacer(),
+          const Spacer(),
         ],
       ),
     );
@@ -72,15 +74,20 @@ class _AssurancePoint extends StatelessWidget {
   final IconData icon;
   final String text;
   const _AssurancePoint({required this.icon, required this.text});
+
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.primary, size: 22),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(child: Text(text, style: AppText.body)),
-          ],
-        ),
-      );
+  Widget build(BuildContext context) {
+    final p = KColors.of(Theme.of(context).brightness);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: KSpace.lg),
+      child: Row(
+        children: [
+          Icon(icon, color: p.accent, size: 22),
+          const SizedBox(width: KSpace.md),
+          Expanded(
+              child: Text(text, style: Theme.of(context).textTheme.bodyLarge)),
+        ],
+      ),
+    );
+  }
 }
