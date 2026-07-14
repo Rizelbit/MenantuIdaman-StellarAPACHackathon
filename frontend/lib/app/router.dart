@@ -9,6 +9,7 @@ import '../screens/home_screen.dart';
 import '../screens/send_amount_screen.dart';
 import '../screens/send_review_screen.dart';
 import '../screens/send_success_screen.dart';
+import '../screens/receive_screen.dart';
 
 /// Nama rute terpusat. Screen navigasi via `context.goNamed(Routes.home)` —
 /// TIDAK dengan string mentah, supaya gampang refactor & agar screen hasil agent
@@ -90,7 +91,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/receive',
           name: Routes.receive,
-          builder: (_, __) => _stub('Terima')),
+          builder: (_, __) => const ReceiveScreen()),
       GoRoute(
           path: '/request',
           name: Routes.requestAmount,
