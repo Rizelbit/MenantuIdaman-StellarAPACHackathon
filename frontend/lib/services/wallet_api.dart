@@ -86,10 +86,11 @@ class WalletApi {
       });
       return AppTransaction(
         id: r.data['txId'] as String? ?? txId,
-        recipientName: recipientName,
+        counterpartyName: recipientName,
         amountIdr: receiveIdr,
         createdAt: DateTime.now(),
         status: TxStatus.settled,
+        direction: TxDirection.send,
       );
     });
   }

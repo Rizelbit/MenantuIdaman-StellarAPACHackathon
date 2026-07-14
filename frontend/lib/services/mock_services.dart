@@ -77,10 +77,11 @@ class MockWalletApi extends WalletApi {
     if (_balanceUsd < 0) _balanceUsd = 0;
     return Ok(AppTransaction(
       id: txId,
-      recipientName: recipientName,
+      counterpartyName: recipientName,
       amountIdr: receiveIdr,
       createdAt: DateTime.now(),
       status: TxStatus.settled,
+      direction: TxDirection.send,
     ));
   }
 
