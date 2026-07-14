@@ -21,6 +21,7 @@
 - **Demo fee = Rp 0** (`Env.feeRate = 0`) to match the deck's "No admin fee".
 - **Money formatting only via `core/money.dart`** (`formatMoney`, `SendQuote`). Screens never format numbers themselves.
 - Working dir for all Flutter commands: `frontend/`. Git commits from repo root `MenantuIdaman-StellarAPACHackathon/`.
+- **Dart package name is `kirimin`** (`pubspec.yaml`). All test imports use `package:kirimin/...`. Deps: `flutter_riverpod ^3.3.2`, `go_router ^17.3.0`, `google_fonts ^8.1.0`, `intl ^0.20.3` — no new packages.
 - End every commit message with: `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
 
 **Design frame reference:** exact per-screen layout/copy lives in Claude Design project
@@ -649,8 +650,8 @@ class AppTransaction {
 }
 ```
 - [ ] **Step 2:** Add `Contact { id, name, relation, initials, accountRef, isFavorite, lastSentAt? }` (const ctor); `SpotlightVariant { aurora, sunset }`; `PromoBanner { id, title, subtitle, ctaLabel, deepLink, badge?, spotlight }`; `RequestStatus { pending, paid, declined, expired }`; `MoneyRequest { id, fromContactId, amountIdr, note?, status, createdAt }`; `ParticipantStatus { pending, paid }`; `SplitParticipant { contactId, name, shareIdr, isSelf, status }` (with `copyWith`); `SplitBill { id, title, totalIdr, createdAt, participants }` with getters `collectedIdr` (Σ paid shares) and `isBalanced` (Σ shares == totalIdr).
-- [ ] **Step 3:** Grep for old field name — `cd frontend && grep -rn "recipientName" lib` — every hit is in files being rebuilt (`send_controller.dart`, mocks); update `send_controller.dart` + `mock_services.dart` references to `counterpartyName`/`direction` now to keep them compiling.
-- [ ] **Step 4: Analyze** — `cd frontend && flutter analyze lib/models lib/state/send_controller.dart lib/services/mock_services.dart` → `No issues found!`
+- [ ] **Step 3:** Grep for old field name — `cd frontend && grep -rn "recipientName" lib test` — update every reference to `counterpartyName` to keep compiling: `send_controller.dart` (builds no tx directly, but check), `services/mock_services.dart` (`submitSignedTx` builds `AppTransaction(recipientName: …)` → `counterpartyName:` + add `direction: TxDirection.send`), and **`test/mock_mode_test.dart:47`** (`state.result!.recipientName` → `counterpartyName`). Package name is **`kirimin`** (see `pubspec.yaml`) — all test imports use `package:kirimin/...`.
+- [ ] **Step 4: Analyze** — `cd frontend && flutter analyze lib/models lib/state/send_controller.dart lib/services/mock_services.dart` → `No issues found!`; and `flutter test test/mock_mode_test.dart` still passes.
 - [ ] **Step 5: Commit** — `feat(models): contacts, promos, requests, split bill; extend transaction`.
 
 ---
@@ -702,8 +703,8 @@ class AppTransaction {
 ```dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:frontend/state/split_controller.dart';
-import 'package:frontend/models/models.dart';
+import 'package:kirimin/state/split_controller.dart';
+import 'package:kirimin/models/models.dart';
 
 void main() {
   ProviderContainer make() => ProviderContainer();
