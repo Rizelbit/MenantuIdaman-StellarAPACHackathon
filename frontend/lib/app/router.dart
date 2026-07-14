@@ -5,12 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../state/auth_controller.dart';
 import '../screens/splash_screen.dart';
 import '../screens/onboarding_screen.dart';
-import '../screens/home_screen.dart';
 import '../screens/send_amount_screen.dart';
 import '../screens/send_review_screen.dart';
 import '../screens/send_success_screen.dart';
-import '../screens/receive_screen.dart';
-import '../screens/history_screen.dart';
 
 /// Nama rute terpusat. Screen navigasi via `context.goNamed(Routes.home)` —
 /// TIDAK dengan string mentah, supaya gampang refactor & agar screen hasil agent
@@ -24,6 +21,16 @@ abstract class Routes {
   static const sendSuccess = 'send-success';
   static const receive = 'receive';
   static const history = 'history';
+  static const requestAmount = 'request-amount';
+  static const requestConfirm = 'request-confirm';
+  static const requestSent = 'request-sent';
+  static const splitCreate = 'split-create';
+  static const splitShares = 'split-shares';
+  static const splitConfirm = 'split-confirm';
+  static const splitDetail = 'split-detail';
+  static const contacts = 'contacts';
+  static const txDetail = 'tx-detail';
+  static const promoDetail = 'promo-detail';
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -64,7 +71,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/home',
           name: Routes.home,
-          builder: (_, __) => const HomeScreen()),
+          builder: (_, __) => _stub('Home')),
       GoRoute(
           path: '/send',
           name: Routes.sendAmount,
@@ -82,11 +89,61 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/receive',
           name: Routes.receive,
-          builder: (_, __) => const ReceiveScreen()),
+          builder: (_, __) => _stub('Terima')),
+      GoRoute(
+          path: '/request',
+          name: Routes.requestAmount,
+          builder: (_, __) => _stub('Minta'),
+          routes: [
+            GoRoute(
+                path: 'confirm',
+                name: Routes.requestConfirm,
+                builder: (_, __) => _stub('Konfirmasi')),
+            GoRoute(
+                path: 'sent',
+                name: Routes.requestSent,
+                builder: (_, __) => _stub('Terkirim')),
+          ]),
+      GoRoute(
+          path: '/split',
+          name: Routes.splitCreate,
+          builder: (_, __) => _stub('Split'),
+          routes: [
+            GoRoute(
+                path: 'shares',
+                name: Routes.splitShares,
+                builder: (_, __) => _stub('Bagian')),
+            GoRoute(
+                path: 'confirm',
+                name: Routes.splitConfirm,
+                builder: (_, __) => _stub('Konfirmasi split')),
+          ]),
+      GoRoute(
+          path: '/split/detail/:id',
+          name: Routes.splitDetail,
+          builder: (_, __) => _stub('Detail split')),
+      GoRoute(
+          path: '/contacts',
+          name: Routes.contacts,
+          builder: (_, __) => _stub('Kontak')),
+      GoRoute(
+          path: '/tx/:id',
+          name: Routes.txDetail,
+          builder: (_, __) => _stub('Transaksi')),
+      GoRoute(
+          path: '/promo/:id',
+          name: Routes.promoDetail,
+          builder: (_, __) => _stub('Promo')),
       GoRoute(
           path: '/history',
           name: Routes.history,
-          builder: (_, __) => const HistoryScreen()),
+          builder: (_, __) => _stub('Riwayat')),
     ],
   );
 });
+
+/// Placeholder screen untuk rute yang belum dibangun — diganti oleh task
+/// masing-masing (mis. Task 14 menukar `/home` dengan `HomeScreen` asli).
+Widget _stub(String name) => Scaffold(
+      body: Center(child: Text('$name — coming soon')),
+    );
