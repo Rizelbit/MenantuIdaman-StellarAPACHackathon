@@ -16,7 +16,7 @@ class RequestConfirmScreen extends ConsumerWidget {
   Future<void> _submit(BuildContext context, WidgetRef ref) async {
     await ref.read(requestControllerProvider.notifier).submit();
     if (!context.mounted) return;
-    context.goNamed(Routes.requestSent);
+    context.pushNamed(Routes.requestSent);
   }
 
   @override

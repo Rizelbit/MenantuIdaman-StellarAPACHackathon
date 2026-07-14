@@ -19,7 +19,7 @@ class FamilyContactsScreen extends ConsumerWidget {
     final n = ref.read(sendControllerProvider.notifier);
     n.reset();
     n.setRecipient(contact.name);
-    context.goNamed(Routes.sendAmount);
+    context.pushNamed(Routes.sendAmount);
   }
 
   @override

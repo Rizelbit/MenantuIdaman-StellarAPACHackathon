@@ -46,7 +46,7 @@ class PromoDetailScreen extends ConsumerWidget {
       bottom: PrimaryPillButton(
         label: promo.ctaLabel,
         onPressed: () => promo.deepLink.startsWith('/split')
-            ? context.goNamed(Routes.splitCreate)
+            ? context.pushNamed(Routes.splitCreate)
             : context.goNamed(Routes.home),
       ),
       child: _PromoDetailBody(promo: promo),

@@ -33,7 +33,7 @@ class SendReviewScreen extends ConsumerWidget {
 
     final state = ref.read(sendControllerProvider);
     if (state.phase == SendPhase.success) {
-      context.goNamed(Routes.sendSuccess);
+      context.pushNamed(Routes.sendSuccess);
     } else if (state.phase == SendPhase.error) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(state.errorMessage ?? 'Gagal mengirim.')),
