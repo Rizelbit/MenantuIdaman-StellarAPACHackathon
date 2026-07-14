@@ -20,6 +20,7 @@ import '../screens/split_detail_screen.dart';
 import '../screens/family_contacts_screen.dart';
 import '../screens/transaction_detail_screen.dart';
 import '../screens/promo_detail_screen.dart';
+import '../screens/history_screen.dart';
 
 /// Nama rute terpusat. Screen navigasi via `context.goNamed(Routes.home)` —
 /// TIDAK dengan string mentah, supaya gampang refactor & agar screen hasil agent
@@ -152,13 +153,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/history',
           name: Routes.history,
-          builder: (_, __) => _stub('Riwayat')),
+          builder: (_, __) => const HistoryScreen()),
     ],
   );
 });
-
-/// Placeholder screen untuk rute yang belum dibangun — diganti oleh task
-/// masing-masing (mis. Task 14 menukar `/home` dengan `HomeScreen` asli).
-Widget _stub(String name) => Scaffold(
-      body: Center(child: Text('$name — coming soon')),
-    );
