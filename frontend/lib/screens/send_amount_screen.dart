@@ -86,7 +86,7 @@ class SendAmountScreen extends ConsumerWidget {
     void onReview() {
       ctrl.goToReview();
       if (ref.read(sendControllerProvider).phase == SendPhase.review) {
-        context.goNamed(Routes.sendReview);
+        context.pushNamed(Routes.sendReview);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Pilih penerima dan nominal dulu')),

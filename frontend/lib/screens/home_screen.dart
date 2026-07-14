@@ -57,14 +57,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildContent(BuildContext context, HomeFeed feed) {
     void goSend() {
       ref.read(sendControllerProvider.notifier).reset();
-      context.goNamed(Routes.sendAmount);
+      context.pushNamed(Routes.sendAmount);
     }
 
     void sendTo(Contact contact) {
       final notifier = ref.read(sendControllerProvider.notifier);
       notifier.reset();
       notifier.setRecipient(contact.name);
-      context.goNamed(Routes.sendAmount);
+      context.pushNamed(Routes.sendAmount);
     }
 
     return Column(
@@ -84,22 +84,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         const SizedBox(height: KSpace.xl),
         _QuickActionsRow(
           onKirim: goSend,
-          onMinta: () => context.goNamed(Routes.requestAmount),
-          onSplit: () => context.goNamed(Routes.splitCreate),
-          onTerima: () => context.goNamed(Routes.receive),
+          onMinta: () => context.pushNamed(Routes.requestAmount),
+          onSplit: () => context.pushNamed(Routes.splitCreate),
+          onTerima: () => context.pushNamed(Routes.receive),
         ),
         const SizedBox(height: KSpace.xl),
         _FamilyShortcuts(
           contacts: feed.favoriteContacts,
           onContactTap: sendTo,
-          onManage: () => context.goNamed(Routes.contacts),
+          onManage: () => context.pushNamed(Routes.contacts),
         ),
         const SizedBox(height: KSpace.xl),
         _RecentTransactions(
           transactions: feed.recentTransactions,
-          onSeeAll: () => context.goNamed(Routes.history),
+          onSeeAll: () => context.pushNamed(Routes.history),
           onTxTap: (tx) =>
-              context.goNamed(Routes.txDetail, pathParameters: {'id': tx.id}),
+              context.pushNamed(Routes.txDetail, pathParameters: {'id': tx.id}),
         ),
       ],
     );
@@ -224,7 +224,7 @@ class _PromoCard extends StatelessWidget {
       child: InkWell(
         borderRadius: radius,
         onTap: () =>
-            context.goNamed(Routes.promoDetail, pathParameters: {'id': promo.id}),
+            context.pushNamed(Routes.promoDetail, pathParameters: {'id': promo.id}),
         child: GradientSpotlight(
           sunset: promo.spotlight == SpotlightVariant.sunset,
           // Builder ambil context DI BAWAH GradientSpotlight supaya

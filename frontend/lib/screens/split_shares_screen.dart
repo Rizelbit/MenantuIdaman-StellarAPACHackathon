@@ -66,7 +66,7 @@ class _SplitSharesScreenState extends ConsumerState<SplitSharesScreen> {
       bottom: PrimaryPillButton(
         label: 'Lanjut',
         onPressed:
-            state.isBalanced ? () => context.goNamed(Routes.splitConfirm) : null,
+            state.isBalanced ? () => context.pushNamed(Routes.splitConfirm) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

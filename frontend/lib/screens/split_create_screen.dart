@@ -43,7 +43,7 @@ class _SplitCreateScreenState extends ConsumerState<SplitCreateScreen> {
   void _onLanjut(BuildContext context, WidgetRef ref) {
     final state = ref.read(splitControllerProvider);
     if (state.totalIdr > 0 && state.participants.length >= 2) {
-      context.goNamed(Routes.splitShares);
+      context.pushNamed(Routes.splitShares);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Isi total dan pilih peserta dulu')),

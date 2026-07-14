@@ -92,7 +92,7 @@ class _RequestAmountScreenState extends ConsumerState<RequestAmountScreen> {
   void _onLanjut(BuildContext context, WidgetRef ref) {
     final state = ref.read(requestControllerProvider);
     if (state.fromContact != null && state.amountIdr > 0) {
-      context.goNamed(Routes.requestConfirm);
+      context.pushNamed(Routes.requestConfirm);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pilih kontak dan nominal dulu')),

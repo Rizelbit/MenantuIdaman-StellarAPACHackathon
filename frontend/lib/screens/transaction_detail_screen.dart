@@ -56,7 +56,7 @@ class TransactionDetailScreen extends ConsumerWidget {
               final n = ref.read(sendControllerProvider.notifier);
               n.reset();
               n.setRecipient(tx.counterpartyName);
-              context.goNamed(Routes.sendAmount);
+              context.pushNamed(Routes.sendAmount);
             },
           ),
           const SizedBox(height: KSpace.sm),

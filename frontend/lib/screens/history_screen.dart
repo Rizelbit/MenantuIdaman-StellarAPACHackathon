@@ -90,7 +90,7 @@ class _HistoryList extends StatelessWidget {
               direction: tx.direction,
               failed: tx.status == TxStatus.failed,
               onTap: () =>
-                  context.goNamed(Routes.txDetail, pathParameters: {'id': tx.id}),
+                  context.pushNamed(Routes.txDetail, pathParameters: {'id': tx.id}),
             ),
         ],
       ],
