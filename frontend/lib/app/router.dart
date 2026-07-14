@@ -13,6 +13,10 @@ import '../screens/receive_screen.dart';
 import '../screens/request_amount_screen.dart';
 import '../screens/request_confirm_screen.dart';
 import '../screens/request_sent_screen.dart';
+import '../screens/split_create_screen.dart';
+import '../screens/split_shares_screen.dart';
+import '../screens/split_confirm_screen.dart';
+import '../screens/split_detail_screen.dart';
 
 /// Nama rute terpusat. Screen navigasi via `context.goNamed(Routes.home)` —
 /// TIDAK dengan string mentah, supaya gampang refactor & agar screen hasil agent
@@ -112,21 +116,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/split',
           name: Routes.splitCreate,
-          builder: (_, __) => _stub('Split'),
+          builder: (_, __) => const SplitCreateScreen(),
           routes: [
             GoRoute(
                 path: 'shares',
                 name: Routes.splitShares,
-                builder: (_, __) => _stub('Bagian')),
+                builder: (_, __) => const SplitSharesScreen()),
             GoRoute(
                 path: 'confirm',
                 name: Routes.splitConfirm,
-                builder: (_, __) => _stub('Konfirmasi split')),
+                builder: (_, __) => const SplitConfirmScreen()),
           ]),
       GoRoute(
           path: '/split/detail/:id',
           name: Routes.splitDetail,
-          builder: (_, __) => _stub('Detail split')),
+          builder: (_, state) =>
+              SplitDetailScreen(id: state.pathParameters['id']!)),
       GoRoute(
           path: '/contacts',
           name: Routes.contacts,
