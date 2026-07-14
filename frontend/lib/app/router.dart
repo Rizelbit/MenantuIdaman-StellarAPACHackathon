@@ -10,6 +10,9 @@ import '../screens/send_amount_screen.dart';
 import '../screens/send_review_screen.dart';
 import '../screens/send_success_screen.dart';
 import '../screens/receive_screen.dart';
+import '../screens/request_amount_screen.dart';
+import '../screens/request_confirm_screen.dart';
+import '../screens/request_sent_screen.dart';
 
 /// Nama rute terpusat. Screen navigasi via `context.goNamed(Routes.home)` —
 /// TIDAK dengan string mentah, supaya gampang refactor & agar screen hasil agent
@@ -95,16 +98,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/request',
           name: Routes.requestAmount,
-          builder: (_, __) => _stub('Minta'),
+          builder: (_, __) => const RequestAmountScreen(),
           routes: [
             GoRoute(
                 path: 'confirm',
                 name: Routes.requestConfirm,
-                builder: (_, __) => _stub('Konfirmasi')),
+                builder: (_, __) => const RequestConfirmScreen()),
             GoRoute(
                 path: 'sent',
                 name: Routes.requestSent,
-                builder: (_, __) => _stub('Terkirim')),
+                builder: (_, __) => const RequestSentScreen()),
           ]),
       GoRoute(
           path: '/split',
