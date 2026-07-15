@@ -1,69 +1,119 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 
-import '../app/router.dart';
-import '../app/theme.dart';
-import '../core/money.dart';
+import '../theme/text_theme.dart';
+import '../theme/tokens.dart';
 import '../widgets/widgets.dart';
 
-/// CONTOH SCREEN (MOCK OFF-RAMP) — sisi penerima.
-/// Untuk demo, ini "layar keluarga": Rp sudah masuk ke rekening. Tidak ada satu
-/// pun istilah crypto. Nilai & rekening di sini statik (mock) — ganti sesuai
-/// skenario demo. Jalur real = anchor/SEP (future work).
+/// Static receive surface — the user's own QR + Kirimin ID, shown so others can
+/// scan or type to send money. Values here are static (mock) until a profile
+/// endpoint exists; swap them in once available.
 class ReceiveScreen extends StatelessWidget {
   const ReceiveScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // MOCK: nilai contoh untuk demo panggung.
-    const receivedIdr = 995000.0;
-    const bankLabel = 'BCA ****1234';
+    final p = KColors.of(Theme.of(context).brightness);
+    final text = Theme.of(context).textTheme;
 
     return AppScaffold(
-      title: 'Terima',
-      leading: BackButton(onPressed: () => context.goNamed(Routes.home)),
-      scrollable: false,
+      title: 'Receive',
+      bottom: PrimaryPillButton(
+        label: 'Share details',
+        icon: Icons.ios_share,
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Details copied')),
+          );
+        },
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Spacer(),
-          Container(
-            height: 88,
-            width: 88,
-            decoration: const BoxDecoration(
-                color: AppColors.accentSoft, shape: BoxShape.circle),
-            child: const Icon(Icons.account_balance_wallet_outlined,
-                size: 44, color: AppColors.accent),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Text('${formatMoney(receivedIdr, Currency.idr)} masuk',
-              style: AppText.h1),
-          const SizedBox(height: AppSpacing.sm),
-          const Text('ke rekening $bankLabel',
-              style: AppText.bodyMuted, textAlign: TextAlign.center),
-          const SizedBox(height: AppSpacing.xl),
-          Card(
-            child: const Padding(
-              padding: EdgeInsets.all(AppSpacing.lg),
-              child: Row(
-                children: [
-                  Icon(Icons.check_circle,
-                      color: AppColors.success, size: 22),
-                  SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Text('Dana tersedia untuk ditarik sekarang.',
-                        style: AppText.body),
-                  ),
-                ],
+          const SizedBox(height: KSpace.lg),
+          Center(
+            child: Container(
+              width: 220,
+              height: 220,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(KRadius.xl),
               ),
+              child: const Icon(Icons.qr_code_2, size: 168, color: Color(0xFF0A0A0A)),
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: KSpace.lg),
+          Center(
+            child: Column(
+              children: [
+                Text('Rani Putri', style: text.titleMedium?.copyWith(color: p.ink)),
+                const SizedBox(height: KSpace.xxs),
+                Text('Scan this to send me money',
+                    style: text.bodySmall?.copyWith(color: p.inkMuted)),
+              ],
+            ),
+          ),
+          const SizedBox(height: KSpace.lg),
+          Container(
+            decoration: BoxDecoration(
+              color: p.surface1,
+              borderRadius: BorderRadius.circular(KRadius.xl),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Column(
+              children: [
+                const _CopyRow(label: 'Kirimin ID', value: 'rani.putri'),
+                Divider(height: 1, color: p.hairline),
+                const _CopyRow(label: 'Account', value: '•••• 4821'),
+              ],
+            ),
+          ),
         ],
       ),
-      bottom: PrimaryButton(
-        label: 'Kembali ke beranda',
-        onPressed: () => context.goNamed(Routes.home),
+    );
+  }
+}
+
+/// One "label over value" row with a trailing copy affordance (copies the value
+/// to the clipboard).
+class _CopyRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _CopyRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = KColors.of(Theme.of(context).brightness);
+    final text = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: microStyle(p.inkMuted)),
+                const SizedBox(height: 2),
+                Text(value,
+                    style: text.bodyMedium?.copyWith(
+                        color: p.ink, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: value));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$label copied')),
+              );
+            },
+            icon: Icon(Icons.copy_outlined, size: 18, color: p.accent),
+          ),
+        ],
       ),
     );
   }

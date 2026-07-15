@@ -86,10 +86,11 @@ class WalletApi {
       });
       return AppTransaction(
         id: r.data['txId'] as String? ?? txId,
-        recipientName: recipientName,
+        counterpartyName: recipientName,
         amountIdr: receiveIdr,
         createdAt: DateTime.now(),
         status: TxStatus.settled,
+        direction: TxDirection.send,
       );
     });
   }
@@ -103,6 +104,77 @@ class WalletApi {
     });
   }
 
+  /// Feed Home (saldo, promo, kontak favorit, transaksi terbaru).
+  /// GET /home/:userId/feed — nominal dalam IDR (lihat mobile-ui-handoff-spec §6.1).
+  Future<Result<HomeFeed>> getHomeFeed(String userId) => _guard(() async {
+        final r = await _dio.get('/home/$userId/feed');
+        return HomeFeed.fromJson(r.data as Map<String, dynamic>);
+      });
+
+  /// Daftar kontak milik user.
+  /// GET /contacts/:userId → `List<Contact>`
+  Future<Result<List<Contact>>> listContacts(String userId) => _guard(() async {
+        final r = await _dio.get('/contacts/$userId');
+        return (r.data as List)
+            .map((e) => Contact.fromJson(e as Map<String, dynamic>))
+            .toList();
+      });
+
+  /// Tambah kontak baru.
+  /// POST /contacts  { name, relation, accountRef } → Contact
+  Future<Result<Contact>> addContact({
+    required String name,
+    required String relation,
+    required String accountRef,
+  }) =>
+      _guard(() async {
+        final r = await _dio.post('/contacts', data: {
+          'name': name,
+          'relation': relation,
+          'accountRef': accountRef,
+        });
+        return Contact.fromJson(r.data as Map<String, dynamic>);
+      });
+
+  /// Buat permintaan uang (request) ke kontak.
+  /// POST /requests  { fromContactId, amountIdr, note } → MoneyRequest
+  Future<Result<MoneyRequest>> createRequest({
+    required String fromContactId,
+    required double amountIdr,
+    String? note,
+  }) =>
+      _guard(() async {
+        final r = await _dio.post('/requests', data: {
+          'fromContactId': fromContactId,
+          'amountIdr': amountIdr,
+          'note': note,
+        });
+        return MoneyRequest.fromJson(r.data as Map<String, dynamic>);
+      });
+
+  /// Buat tagihan split baru.
+  /// POST /splits  { title, totalIdr, participants[] } → SplitBill
+  Future<Result<SplitBill>> createSplit({
+    required String title,
+    required double totalIdr,
+    required List<SplitParticipant> participants,
+  }) =>
+      _guard(() async {
+        final r = await _dio.post('/splits', data: {
+          'title': title,
+          'totalIdr': totalIdr,
+          'participants': participants.map((p) => p.toJson()).toList(),
+        });
+        return SplitBill.fromJson(r.data as Map<String, dynamic>);
+      });
+
+  /// Ambil detail tagihan split.
+  /// GET /splits/:id → SplitBill
+  Future<Result<SplitBill>> getSplit(String id) => _guard(() async {
+        final r = await _dio.get('/splits/$id');
+        return SplitBill.fromJson(r.data as Map<String, dynamic>);
+      });
+
   /// Bungkus semua call: peta DioException → AppFailure ramah-user.
   Future<Result<T>> _guard<T>(Future<T> Function() run) async {
     try {
@@ -112,9 +184,9 @@ class WalletApi {
           e.type == DioExceptionType.connectionError) {
         return const Err(AppFailure.network);
       }
-      return Err(AppFailure('Gagal memproses. Coba lagi.', cause: e));
+      return Err(AppFailure('Couldn\'t process that. Try again.', cause: e));
     } catch (e) {
-      return Err(AppFailure.generic);
+      return const Err(AppFailure.generic);
     }
   }
 }

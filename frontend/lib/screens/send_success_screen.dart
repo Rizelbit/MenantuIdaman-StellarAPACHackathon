@@ -3,52 +3,76 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app/router.dart';
-import '../app/theme.dart';
 import '../core/money.dart';
 import '../state/send_controller.dart';
+import '../theme/tokens.dart';
 import '../widgets/widgets.dart';
 
-/// CONTOH SCREEN TER-WIRE PENUH. Konfirmasi lega, bukan teknis.
+/// Layar 3/3 alur kirim: konfirmasi visual lega + ringkasan bukti transaksi.
+/// Dibaca dari `sendController.result` (bukan `.recipientName` lama — field
+/// itu sudah diganti `AppTransaction.counterpartyName`).
 class SendSuccessScreen extends ConsumerWidget {
   const SendSuccessScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final result = ref.watch(sendControllerProvider).result;
+    final p = KColors.of(Theme.of(context).brightness);
+    final text = Theme.of(context).textTheme;
+
+    void done() {
+      ref.read(sendControllerProvider.notifier).reset();
+      context.goNamed(Routes.home);
+    }
+
+    if (result == null) {
+      // Layar dibuka tanpa hasil kiriman (mis. deep-link langsung) — kembali
+      // ke home setelah frame pertama alih-alih menampilkan bukti kosong.
+      WidgetsBinding.instance.addPostFrameCallback((_) => done());
+      return const AppScaffold(scrollable: false, child: SizedBox.shrink());
+    }
 
     return AppScaffold(
       scrollable: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      bottom: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Spacer(),
-          Container(
-            height: 88,
-            width: 88,
-            decoration: const BoxDecoration(
-                color: AppColors.successSoft, shape: BoxShape.circle),
-            child: const Icon(Icons.check_rounded,
-                size: 48, color: AppColors.success),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const Text('Uang terkirim', style: AppText.h1),
-          const SizedBox(height: AppSpacing.sm),
-          if (result != null)
-            Text(
-              '${result.recipientName} menerima '
-              '${formatMoney(result.amountIdr, Currency.idr)}.',
-              style: AppText.bodyMuted,
-              textAlign: TextAlign.center,
+          PrimaryPillButton(label: 'Done', onPressed: done),
+          const SizedBox(height: KSpace.sm),
+          SecondaryPillButton(
+            label: 'Share receipt',
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Receipt copied.')),
             ),
-          const Spacer(),
+          ),
         ],
       ),
-      bottom: PrimaryButton(
-        label: 'Selesai',
-        onPressed: () {
-          ref.read(sendControllerProvider.notifier).reset();
-          context.goNamed(Routes.home);
-        },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Spacer(),
+          Center(child: Icon(Icons.check_circle, size: 88, color: p.success)),
+          const SizedBox(height: KSpace.lg),
+          Text('Money\'s on its way',
+              style: text.headlineMedium, textAlign: TextAlign.center),
+          const SizedBox(height: KSpace.xs),
+          Text(
+            '${formatMoney(result.amountIdr, Currency.idr)} is heading to '
+            '${result.counterpartyName}',
+            style: text.bodyMedium?.copyWith(color: p.inkMuted),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: KSpace.xl),
+          InfoRowsCard(
+            rows: [
+              InfoRow('To', result.counterpartyName),
+              InfoRow('Amount', formatMoney(result.amountIdr, Currency.idr)),
+              InfoRow('Reference', result.reference ?? 'KRM-8F2A091',
+                  valueMonospace: true),
+            ],
+          ),
+          const Spacer(flex: 2),
+        ],
       ),
     );
   }

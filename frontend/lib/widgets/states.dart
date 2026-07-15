@@ -1,84 +1,46 @@
 import 'package:flutter/material.dart';
-import '../app/theme.dart';
-import 'buttons.dart';
+import '../theme/tokens.dart';
 
-/// Loading, error, dan empty — ditulis sebagai ARAHAN, bukan mood.
-/// Error tidak minta maaf & tidak samar; empty adalah ajakan bertindak.
-
-class LoadingView extends StatelessWidget {
-  final String? message;
-  const LoadingView({super.key, this.message});
-  @override
-  Widget build(BuildContext context) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: AppColors.primary),
-            if (message != null) ...[
-              const SizedBox(height: AppSpacing.lg),
-              Text(message!, style: AppText.bodyMuted),
-            ],
-          ],
-        ),
-      );
-}
-
-class ErrorView extends StatelessWidget {
-  final String message;
-  final VoidCallback? onRetry;
-  const ErrorView({super.key, required this.message, this.onRetry});
-  @override
-  Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: AppSpacing.screen,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline,
-                  color: AppColors.danger, size: 40),
-              const SizedBox(height: AppSpacing.lg),
-              Text(message, style: AppText.body, textAlign: TextAlign.center),
-              if (onRetry != null) ...[
-                const SizedBox(height: AppSpacing.xl),
-                PrimaryButton(label: 'Coba lagi', onPressed: onRetry),
-              ],
-            ],
-          ),
-        ),
-      );
-}
-
+/// Empty state for a list/screen with nothing to show yet: centered icon,
+/// title, and an explanatory subtitle — no CTA, callers compose one below if
+/// needed.
 class EmptyView extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final Widget? action;
-  const EmptyView({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.action,
-  });
+
+  const EmptyView({required this.icon, required this.title, required this.subtitle, super.key});
+
   @override
-  Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: AppSpacing.screen,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 44, color: AppColors.textSecondary),
-              const SizedBox(height: AppSpacing.lg),
-              Text(title, style: AppText.h2, textAlign: TextAlign.center),
-              const SizedBox(height: AppSpacing.sm),
-              Text(subtitle,
-                  style: AppText.bodyMuted, textAlign: TextAlign.center),
-              if (action != null) ...[
-                const SizedBox(height: AppSpacing.xl),
-                action!,
-              ],
-            ],
-          ),
+  Widget build(BuildContext context) {
+    final p = KColors.of(Theme.of(context).brightness);
+    final text = Theme.of(context).textTheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: KSpace.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 44, color: p.inkMuted),
+            const SizedBox(height: KSpace.lg),
+            Text(title, style: text.titleMedium, textAlign: TextAlign.center),
+            const SizedBox(height: KSpace.xs),
+            Text(
+              subtitle,
+              style: text.bodyMedium?.copyWith(color: p.inkMuted),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
+}
+
+/// Centered spinner for a screen/section awaiting data.
+class LoadingView extends StatelessWidget {
+  const LoadingView({super.key});
+
+  @override
+  Widget build(BuildContext context) => const Center(child: CircularProgressIndicator());
 }

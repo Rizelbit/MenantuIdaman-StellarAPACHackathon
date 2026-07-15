@@ -1,7 +1,15 @@
-/// Barrel — satu import untuk seluruh kit UI.
-/// Di screen cukup: import '../widgets/widgets.dart';
+/// Barrel — one import for the whole UI kit: `import '../widgets/widgets.dart';`
+library;
 export 'app_scaffold.dart';
-export 'buttons.dart';
-export 'money_widgets.dart';
+export 'glow_background.dart';
+export 'pill_button.dart';
+export 'icon_button.dart';
+export 'quick_action.dart';
+export 'cards.dart';
+export 'avatar.dart';
+export 'status_chip.dart';
+export 'transaction_row.dart';
+export 'money_text.dart';
+export 'amount_keypad.dart';
+export 'sheets.dart';
 export 'states.dart';
-export 'transaction_tile.dart';

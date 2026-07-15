@@ -1,6 +1,4 @@
 /// Result minimal untuk membedakan sukses vs gagal tanpa lempar exception ke UI.
-/// UI menampilkan [AppFailure.message] apa adanya — jadi pesan ditulis dari sisi
-/// user ("Koneksi terputus, coba lagi"), bukan sisi sistem ("SocketException").
 sealed class Result<T> {
   const Result();
   R when<R>({
@@ -29,9 +27,9 @@ class AppFailure {
   const AppFailure(this.message, {this.cause});
 
   static const network =
-      AppFailure('Koneksi terputus. Cek internet lalu coba lagi.');
+      AppFailure('Connection lost. Check your internet and try again.');
   static const passkeyCancelled =
-      AppFailure('Verifikasi dibatalkan. Coba lagi ketika siap.');
+      AppFailure('Verification cancelled. Try again when you\'re ready.');
   static const generic =
-      AppFailure('Ada yang tidak beres. Coba lagi sebentar lagi.');
+      AppFailure('Something went wrong. Try again in a moment.');
 }

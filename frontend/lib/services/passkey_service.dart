@@ -47,6 +47,7 @@ class PasskeyService {
             userVerification: 'required',
           ),
           pubKeyCredParams: [
+            // -7 = ES256 (secp256r1) — yang diverifikasi smart wallet Stellar
             PubKeyCredParamType(type: 'public-key', alg: -7),
           ],
           excludeCredentials: const [],
@@ -109,6 +110,6 @@ class PasskeyService {
     if (msg.contains('network') || msg.contains('timeout')) {
       return AppFailure.network;
     }
-    return AppFailure('Face ID belum berhasil. Coba lagi.', cause: e);
+    return AppFailure('Face ID didn\'t work. Try again.', cause: e);
   }
 }

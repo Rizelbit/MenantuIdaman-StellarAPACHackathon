@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'app/router.dart';
-import 'app/theme.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('id_ID', null); // format tanggal Indonesia
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+  ));
+  await initializeDateFormatting('id_ID', null);
   runApp(const ProviderScope(child: KiriminApp()));
 }
 
@@ -20,7 +24,9 @@ class KiriminApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Kirimin',
       debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(),
+      theme: buildTheme(dark: false),
+      darkTheme: buildTheme(dark: true),
+      themeMode: ThemeMode.system,
       routerConfig: router,
     );
   }

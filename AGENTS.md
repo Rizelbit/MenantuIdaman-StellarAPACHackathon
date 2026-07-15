@@ -70,7 +70,7 @@ APACStellar/
 
 1. **Baca dulu** dokumen relevan di `docs/` sebelum ubah kode.
 2. **Minimal change** — ubah seperlunya, jangan over-engineer.
-3. **Test** setelah mengubah kode (backend: `npm run lint && npm run test`; frontend: `flutter analyze`).
+3. **Test** setelah mengubah kode (backend: `npm run lint && npm run test`; frontend: `flutter analyze`). **Untuk frontend, selesaikan SEMUA temuan di file yang disentuh** — bukan cuma error compile, juga info/lint seperti const yang harus di-hoist ke widget terluar, urutan argumen `child`/`bottom` (letakkan `child` terakhir), dan `library;` setelah dangling doc comment. `flutter_lints` sudah aktif di `analysis_options.yaml`; jangan tinggalkan temuan bersih-bersih untuk manusia.
 4. **Jangan commit** atau push kecuali diminta eksplisit.
 5. **Jangan install package global** — gunakan `npm` lokal di `backend/` atau `pubspec.yaml` di `frontend/`.
 

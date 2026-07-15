@@ -4,12 +4,24 @@ import 'package:go_router/go_router.dart';
 
 import '../state/auth_controller.dart';
 import '../screens/splash_screen.dart';
+import '../screens/welcome_screen.dart';
+import '../screens/passcode_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/send_amount_screen.dart';
 import '../screens/send_review_screen.dart';
 import '../screens/send_success_screen.dart';
 import '../screens/receive_screen.dart';
+import '../screens/request_amount_screen.dart';
+import '../screens/request_confirm_screen.dart';
+import '../screens/request_sent_screen.dart';
+import '../screens/split_create_screen.dart';
+import '../screens/split_shares_screen.dart';
+import '../screens/split_confirm_screen.dart';
+import '../screens/split_detail_screen.dart';
+import '../screens/family_contacts_screen.dart';
+import '../screens/transaction_detail_screen.dart';
+import '../screens/promo_detail_screen.dart';
 import '../screens/history_screen.dart';
 
 /// Nama rute terpusat. Screen navigasi via `context.goNamed(Routes.home)` —
@@ -17,6 +29,8 @@ import '../screens/history_screen.dart';
 /// punya kontrak jelas.
 abstract class Routes {
   static const splash = 'splash';
+  static const welcome = 'welcome';
+  static const passcode = 'passcode';
   static const onboarding = 'onboarding';
   static const home = 'home';
   static const sendAmount = 'send-amount';
@@ -24,6 +38,16 @@ abstract class Routes {
   static const sendSuccess = 'send-success';
   static const receive = 'receive';
   static const history = 'history';
+  static const requestAmount = 'request-amount';
+  static const requestConfirm = 'request-confirm';
+  static const requestSent = 'request-sent';
+  static const splitCreate = 'split-create';
+  static const splitShares = 'split-shares';
+  static const splitConfirm = 'split-confirm';
+  static const splitDetail = 'split-detail';
+  static const contacts = 'contacts';
+  static const txDetail = 'tx-detail';
+  static const promoDetail = 'promo-detail';
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -43,20 +67,29 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final signedIn = auth.value?.isSignedIn ?? false;
       final loc = state.matchedLocation;
-      final onOnboarding = loc == '/onboarding';
       final onSplash = loc == '/';
+      // Layar auth yang boleh diakses tanpa sesi: Face ID (welcome) & passcode.
+      final onAuthGate = loc == '/welcome' || loc == '/passcode';
 
-      // Belum punya akun → arahkan ke onboarding (kecuali sudah di sana).
-      if (!signedIn) return onOnboarding ? null : '/onboarding';
+      // Belum punya akun → arahkan ke welcome (kecuali sudah di layar auth).
+      if (!signedIn) return onAuthGate ? null : '/welcome';
 
-      // Sudah punya akun → keluar dari splash/onboarding ke home.
-      return (onSplash || onOnboarding) ? '/home' : null;
+      // Sudah punya akun → keluar dari splash/welcome/passcode ke home.
+      return (onSplash || onAuthGate) ? '/home' : null;
     },
     routes: [
       GoRoute(
           path: '/',
           name: Routes.splash,
           builder: (_, __) => const SplashScreen()),
+      GoRoute(
+          path: '/welcome',
+          name: Routes.welcome,
+          builder: (_, __) => const WelcomeScreen()),
+      GoRoute(
+          path: '/passcode',
+          name: Routes.passcode,
+          builder: (_, __) => const PasscodeScreen()),
       GoRoute(
           path: '/onboarding',
           name: Routes.onboarding,
@@ -83,6 +116,53 @@ final routerProvider = Provider<GoRouter>((ref) {
           path: '/receive',
           name: Routes.receive,
           builder: (_, __) => const ReceiveScreen()),
+      GoRoute(
+          path: '/request',
+          name: Routes.requestAmount,
+          builder: (_, __) => const RequestAmountScreen(),
+          routes: [
+            GoRoute(
+                path: 'confirm',
+                name: Routes.requestConfirm,
+                builder: (_, __) => const RequestConfirmScreen()),
+            GoRoute(
+                path: 'sent',
+                name: Routes.requestSent,
+                builder: (_, __) => const RequestSentScreen()),
+          ]),
+      GoRoute(
+          path: '/split',
+          name: Routes.splitCreate,
+          builder: (_, __) => const SplitCreateScreen(),
+          routes: [
+            GoRoute(
+                path: 'shares',
+                name: Routes.splitShares,
+                builder: (_, __) => const SplitSharesScreen()),
+            GoRoute(
+                path: 'confirm',
+                name: Routes.splitConfirm,
+                builder: (_, __) => const SplitConfirmScreen()),
+          ]),
+      GoRoute(
+          path: '/split/detail/:id',
+          name: Routes.splitDetail,
+          builder: (_, state) =>
+              SplitDetailScreen(id: state.pathParameters['id']!)),
+      GoRoute(
+          path: '/contacts',
+          name: Routes.contacts,
+          builder: (_, __) => const FamilyContactsScreen()),
+      GoRoute(
+          path: '/tx/:id',
+          name: Routes.txDetail,
+          builder: (_, state) =>
+              TransactionDetailScreen(id: state.pathParameters['id']!)),
+      GoRoute(
+          path: '/promo/:id',
+          name: Routes.promoDetail,
+          builder: (_, state) =>
+              PromoDetailScreen(id: state.pathParameters['id']!)),
       GoRoute(
           path: '/history',
           name: Routes.history,
