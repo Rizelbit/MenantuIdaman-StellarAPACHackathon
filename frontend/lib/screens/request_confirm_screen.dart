@@ -14,8 +14,14 @@ class RequestConfirmScreen extends ConsumerWidget {
   const RequestConfirmScreen({super.key});
 
   Future<void> _submit(BuildContext context, WidgetRef ref) async {
-    await ref.read(requestControllerProvider.notifier).submit();
+    final failure = await ref.read(requestControllerProvider.notifier).submit();
     if (!context.mounted) return;
+    if (failure != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(failure.message)),
+      );
+      return;
+    }
     context.pushNamed(Routes.requestSent);
   }
 

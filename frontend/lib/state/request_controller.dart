@@ -41,9 +41,10 @@ class RequestController extends Notifier<RequestState> {
 
   void setNote(String n) => state = state.copyWith(note: n);
 
-  Future<void> submit() async {
+  /// Returns null on success, or an [AppFailure] the screen can surface.
+  Future<AppFailure?> submit() async {
     final contact = state.fromContact;
-    if (contact == null) return;
+    if (contact == null) return null;
 
     final api = ref.read(walletApiProvider);
     switch (await api.createRequest(
@@ -53,8 +54,9 @@ class RequestController extends Notifier<RequestState> {
     )) {
       case Ok():
         state = state.copyWith(status: RequestStatus.pending);
-      case Err():
-        break;
+        return null;
+      case Err(failure: final f):
+        return f;
     }
   }
 

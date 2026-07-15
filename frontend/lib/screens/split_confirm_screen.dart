@@ -15,11 +15,17 @@ class SplitConfirmScreen extends ConsumerWidget {
   const SplitConfirmScreen({super.key});
 
   Future<void> _submit(BuildContext context, WidgetRef ref) async {
-    await ref.read(splitControllerProvider.notifier).submit();
+    final failure = await ref.read(splitControllerProvider.notifier).submit();
     if (!context.mounted) return;
+    if (failure != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(failure.message)),
+      );
+      return;
+    }
     // Demo: detail intentionally shows the canonical sample split ('split1',
-    // mid-progress) so the "Ingatkan" nudge state is visible. With a real
-    // backend, navigate to the id returned by submit().
+    // mid-progress) so the nudge state is visible. With a real backend,
+    // navigate to the id returned by submit().
     context.pushNamed(Routes.splitDetail, pathParameters: {'id': 'split1'});
   }
 
