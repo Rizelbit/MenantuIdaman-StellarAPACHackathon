@@ -31,23 +31,31 @@ class FamilyContactsScreen extends ConsumerWidget {
     final p = KColors.of(Theme.of(context).brightness);
 
     return AppScaffold(
-      title: 'Keluarga',
+      title: 'Family',
+      actions: [
+        CircleIconButton(
+          icon: Icons.search,
+          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Search coming soon')),
+          ),
+        ),
+      ],
       bottom: PrimaryPillButton(
-        label: 'Tambah kontak',
+        label: 'Add contact',
         onPressed: () => _showAddContactSheet(context, ref),
       ),
       child: contacts.isEmpty
           ? const EmptyView(
               icon: Icons.group_outlined,
-              title: 'Belum ada kontak',
-              subtitle: 'Tambahkan keluarga yang sering kamu kirimi.',
+              title: 'No contacts yet',
+              subtitle: 'Add the family you send to most.',
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: KSpace.md),
                 if (favorites.isNotEmpty) ...[
-                  Text('FAVORIT',
+                  Text('Favorites',
                       style: text.titleMedium?.copyWith(color: p.inkMuted)),
                   const SizedBox(height: KSpace.xs),
                   for (final c in favorites)
@@ -58,7 +66,7 @@ class FamilyContactsScreen extends ConsumerWidget {
                   const SizedBox(height: KSpace.lg),
                 ],
                 if (others.isNotEmpty) ...[
-                  Text('SEMUA KONTAK',
+                  Text('All contacts',
                       style: text.titleMedium?.copyWith(color: p.inkMuted)),
                   const SizedBox(height: KSpace.xs),
                   for (final c in others)
@@ -172,21 +180,21 @@ class _AddContactSheetState extends ConsumerState<_AddContactSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Tambah kontak', style: text.titleMedium),
+            Text('Add contact', style: text.titleMedium),
             const SizedBox(height: KSpace.md),
-            Text('Nama', style: text.titleMedium?.copyWith(color: p.inkMuted)),
+            Text('Name', style: text.titleMedium?.copyWith(color: p.inkMuted)),
             const SizedBox(height: KSpace.xs),
             TextField(controller: _nameCtrl, style: text.bodyLarge),
             const SizedBox(height: KSpace.sm),
-            Text('Hubungan', style: text.titleMedium?.copyWith(color: p.inkMuted)),
+            Text('Relationship', style: text.titleMedium?.copyWith(color: p.inkMuted)),
             const SizedBox(height: KSpace.xs),
             TextField(
               controller: _relationCtrl,
               style: text.bodyLarge,
-              decoration: const InputDecoration(hintText: 'Ibu/Adik/Ayah'),
+              decoration: const InputDecoration(hintText: 'Mother / Sister / Father'),
             ),
             const SizedBox(height: KSpace.sm),
-            Text('Nomor rekening', style: text.titleMedium?.copyWith(color: p.inkMuted)),
+            Text('Account number', style: text.titleMedium?.copyWith(color: p.inkMuted)),
             const SizedBox(height: KSpace.xs),
             TextField(
               controller: _accountCtrl,
@@ -194,7 +202,7 @@ class _AddContactSheetState extends ConsumerState<_AddContactSheet> {
               decoration: const InputDecoration(hintText: '•••• 1234'),
             ),
             const SizedBox(height: KSpace.lg),
-            PrimaryPillButton(label: 'Simpan', onPressed: _submit),
+            PrimaryPillButton(label: 'Save', onPressed: _submit),
           ],
         ),
       ),

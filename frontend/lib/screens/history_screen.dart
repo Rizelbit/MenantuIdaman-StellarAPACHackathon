@@ -24,17 +24,28 @@ class HistoryScreen extends ConsumerWidget {
 
     return feed.when(
       data: (data) => AppScaffold(
-        title: 'Riwayat',
+        title: 'History',
+        largeTitle: true,
+        actions: [
+          CircleIconButton(
+            icon: Icons.filter_list,
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Filters coming soon')),
+            ),
+          ),
+        ],
         scrollable: false,
         child: _HistoryList(transactions: data.recentTransactions),
       ),
       loading: () => const AppScaffold(
-        title: 'Riwayat',
+        title: 'History',
+        largeTitle: true,
         scrollable: false,
         child: LoadingView(),
       ),
       error: (error, stack) => AppScaffold(
-        title: 'Riwayat',
+        title: 'History',
+        largeTitle: true,
         scrollable: false,
         child: Center(
           child: Column(
@@ -42,12 +53,12 @@ class HistoryScreen extends ConsumerWidget {
             children: [
               const EmptyView(
                 icon: Icons.error_outline,
-                title: 'Gagal memuat riwayat',
-                subtitle: 'Periksa koneksi lalu coba lagi.',
+                title: 'Couldn\'t load history',
+                subtitle: 'Check your connection and try again.',
               ),
               const SizedBox(height: KSpace.md),
               SecondaryPillButton(
-                label: 'Coba lagi',
+                label: 'Try again',
                 onPressed: () => ref.invalidate(homeFeedProvider),
               ),
             ],
@@ -68,8 +79,8 @@ class _HistoryList extends StatelessWidget {
     if (transactions.isEmpty) {
       return const EmptyView(
         icon: Icons.receipt_long_outlined,
-        title: 'Belum ada transaksi',
-        subtitle: 'Riwayat kirimanmu akan muncul di sini.',
+        title: 'No transactions yet',
+        subtitle: 'Your transfer history will show up here.',
       );
     }
 
@@ -148,31 +159,31 @@ List<_DayGroup> _groupByDay(List<AppTransaction> transactions) {
   olderTx.sort(byNewest);
 
   return [
-    if (todayTx.isNotEmpty) _DayGroup('Hari ini', todayTx),
-    if (weekTx.isNotEmpty) _DayGroup('Minggu ini', weekTx),
-    if (olderTx.isNotEmpty) _DayGroup('Sebelumnya', olderTx),
+    if (todayTx.isNotEmpty) _DayGroup('Today', todayTx),
+    if (weekTx.isNotEmpty) _DayGroup('This week', weekTx),
+    if (olderTx.isNotEmpty) _DayGroup('Earlier', olderTx),
   ];
 }
 
 String _directionLabel(TxDirection direction) {
   switch (direction) {
     case TxDirection.send:
-      return 'Terkirim';
+      return 'Sent';
     case TxDirection.receive:
-      return 'Diterima';
+      return 'Received';
     case TxDirection.split:
       return 'Split';
   }
 }
 
-/// "HH:mm" untuk transaksi hari ini; selain itu "d MMM" lokal id.
+/// "HH:mm" for same-day transactions; otherwise "d MMM".
 String _relativeTime(DateTime createdAt) {
   final now = DateTime.now();
   final sameDay =
       now.year == createdAt.year && now.month == createdAt.month && now.day == createdAt.day;
   return sameDay
-      ? DateFormat('HH:mm', 'id').format(createdAt)
-      : DateFormat('d MMM', 'id').format(createdAt);
+      ? DateFormat('HH:mm').format(createdAt)
+      : DateFormat('d MMM').format(createdAt);
 }
 
 /// Dua huruf pertama nama, huruf besar — inisial avatar lawan transaksi.

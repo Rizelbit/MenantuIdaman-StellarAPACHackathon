@@ -38,18 +38,18 @@ class SplitDetailScreen extends ConsumerWidget {
       data: (bill) => AppScaffold(
         title: bill.title,
         bottom: PrimaryPillButton(
-          label: 'Selesai',
+          label: 'Done',
           onPressed: () => context.goNamed(Routes.home),
         ),
         child: _SplitDetailBody(bill: bill),
       ),
       loading: () => const AppScaffold(
-        title: 'Detail split',
+        title: 'Split detail',
         scrollable: false,
         child: LoadingView(),
       ),
       error: (error, stack) => AppScaffold(
-        title: 'Detail split',
+        title: 'Split detail',
         scrollable: false,
         child: Center(
           child: Column(
@@ -57,12 +57,12 @@ class SplitDetailScreen extends ConsumerWidget {
             children: [
               const EmptyView(
                 icon: Icons.error_outline,
-                title: 'Gagal memuat tagihan',
-                subtitle: 'Periksa koneksi lalu coba lagi.',
+                title: 'Couldn\'t load this bill',
+                subtitle: 'Check your connection and try again.',
               ),
               const SizedBox(height: KSpace.md),
               SecondaryPillButton(
-                label: 'Coba lagi',
+                label: 'Try again',
                 onPressed: () => ref.invalidate(splitByIdProvider(id)),
               ),
             ],
@@ -87,7 +87,7 @@ class _SplitDetailBody extends StatelessWidget {
         const SizedBox(height: KSpace.md),
         _CollectionProgress(bill: bill),
         const SizedBox(height: KSpace.xl),
-        Text('Peserta', style: text.titleMedium),
+        Text('Participants', style: text.titleMedium),
         const SizedBox(height: KSpace.xs),
         for (final participant in bill.participants)
           Padding(
@@ -118,7 +118,7 @@ class _CollectionProgress extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Terkumpul ${formatMoney(bill.collectedIdr, Currency.idr)} dari '
+            'Collected ${formatMoney(bill.collectedIdr, Currency.idr)} of '
             '${formatMoney(bill.totalIdr, Currency.idr)}',
             style: text.bodyLarge,
           ),
@@ -173,15 +173,15 @@ class _ParticipantStatusRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: KSpace.sm),
-              paid ? const StatusChip.success('Lunas') : const StatusChip.info('Menunggu'),
+              paid ? const StatusChip.success('Paid') : const StatusChip.info('Pending'),
             ],
           ),
           if (showRemind) ...[
             const SizedBox(height: KSpace.sm),
             SecondaryPillButton(
-              label: 'Ingatkan ${participant.name}',
+              label: 'Nudge ${participant.name}',
               onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Pengingat terkirim')),
+                const SnackBar(content: Text('Reminder sent')),
               ),
             ),
           ],
