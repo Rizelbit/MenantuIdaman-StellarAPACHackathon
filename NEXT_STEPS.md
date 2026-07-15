@@ -20,7 +20,7 @@ Railway auto-deploy dari `main` (asumsi sudah dikonfigurasi begitu di S0-01). Tu
 
 ```bash
 curl -sI https://menantuidaman-stellarapachackathon-production.up.railway.app/.well-known/apple-app-site-association
-# Harus: HTTP/2 200, content-type: application/json
+# Harus: HTTP 200, content-type: application/json (versi HTTP/1.1 vs HTTP/2 tidak masalah, itu cuma protokol edge server Railway)
 
 curl -s https://menantuidaman-stellarapachackathon-production.up.railway.app/.well-known/assetlinks.json
 # Harus mengandung "package_name": "com.kirimin.app"

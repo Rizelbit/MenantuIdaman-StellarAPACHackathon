@@ -8,7 +8,7 @@ Menyiapkan seluruh infrastruktur agar sprint berikutnya bisa langsung fokus ke k
 
 - [x] Backend ter-deploy di Railway.app dengan URL HTTPS stabil (RP_ID sudah di-lock)
 - [x] `GET /health` dapat diakses publik dan mengembalikan `{"ok":true}`
-- [ ] `GET /.well-known/apple-app-site-association` → HTTP 200, JSON valid — Content-Type bug sudah **diperbaiki di kode** (2026-07-15), Bundle ID sudah `com.kirimin.app`; menunggu deploy untuk verifikasi live + Team ID masih placeholder (butuh Apple Developer Program)
+- [ ] `GET /.well-known/apple-app-site-association` → HTTP 200, JSON valid — Content-Type sudah fix & **terverifikasi live** (2026-07-15), Bundle ID sudah `com.kirimin.app`; sisa blocker cuma Team ID masih placeholder (butuh Apple Developer Program)
 - [x] `GET /.well-known/assetlinks.json` → HTTP 200, JSON valid
 - [ ] iOS: Associated Domains entitlement terpasang di Xcode — entitlements file + pbxproj sudah di-wire manual (2026-07-15); belum dikonfirmasi buka di Xcode UI (perlu macOS)
 - [ ] Android: Asset Links terkonfigurasi di manifest — file sudah dikonfigurasi (manifest + strings.xml), tinggal verifikasi build & `adb logcat` di device fisik
@@ -164,7 +164,7 @@ flutter run \
 
 **Update (2026-07-15):**  
 - Bundle ID resmi diputuskan `com.kirimin.app` (selaras dengan Android S0-08) — file ini dan `Runner.xcodeproj/project.pbxproj` sudah diupdate ke `com.kirimin.app`.
-- Bug Content-Type (`application/octet-stream` bukan `application/json`) sudah **diperbaiki di kode** (`backend/src/index.ts`, `express.static` sekarang set header eksplisit untuk file tanpa extension). **Belum live** — perlu deploy ke Railway untuk verifikasi via `curl`.
+- Bug Content-Type (`application/octet-stream` bukan `application/json`) sudah diperbaiki di kode dan **terverifikasi live** — `curl -sI` ke endpoint produksi sekarang mengembalikan `Content-Type: application/json`.
 - Team ID **masih placeholder** (`TEAM_ID_NANTI_DIISI`) — butuh akun Apple Developer Program berbayar, tidak bisa diisi dari sini. Lihat `NEXT_STEPS.md` di root repo.
 
 **Konteks:**  
@@ -193,7 +193,7 @@ Contoh: `"ABCDE12345.com.kirimin.app"`
 
 **Acceptance criteria:**
 - [x] File ada di path yang benar (tanpa `.json` extension)
-- [ ] Setelah deploy Railway: `curl -v https://<railway-url>/.well-known/apple-app-site-association` → HTTP 200, `Content-Type: application/json` — fix sudah di kode, **menunggu deploy** untuk verifikasi live
+- [x] Setelah deploy Railway: `curl -v https://<railway-url>/.well-known/apple-app-site-association` → HTTP 200, `Content-Type: application/json` — terverifikasi live 2026-07-15
 - [x] JSON valid (test di [jsonlint.com](https://jsonlint.com))
 - [ ] Team ID dan Bundle ID sudah benar — Bundle ID sudah `com.kirimin.app`, Team ID masih `TEAM_ID_NANTI_DIISI` (butuh Apple Developer Program)
 
@@ -286,9 +286,9 @@ curl -v https://<railway-url>/.well-known/assetlinks.json
 
 **Acceptance criteria:**
 - [x] Semua 3 endpoint mengembalikan HTTP 200
-- [ ] `Content-Type` adalah `application/json` — fix sudah di kode (S0-04), **menunggu deploy** untuk verifikasi live
-- [ ] iOS AASA validator: VALID — belum dijalankan, perlu deploy + Team ID terisi dulu
-- [ ] Android Digital Asset Links tester: VALID — belum dijalankan, perlu deploy `assetlinks.json` (S0-08) dulu
+- [x] `Content-Type` adalah `application/json` — terverifikasi live 2026-07-15 (`curl -sI` ke AASA)
+- [ ] iOS AASA validator: VALID — belum dijalankan, perlu Team ID terisi dulu (lihat `NEXT_STEPS.md`)
+- [ ] Android Digital Asset Links tester: VALID — `assetlinks.json` sudah live dengan `com.kirimin.app`, tinggal jalankan tester (lihat `NEXT_STEPS.md`)
 
 ---
 
@@ -344,7 +344,7 @@ Bila menggunakan free Apple Developer account (Personal Team), Associated Domain
 Package name resmi diputuskan: **`com.kirimin.app`** (ganti dari default `com.example.kirimin`). Sudah dieksekusi:
 - `applicationId` & `namespace` di `build.gradle.kts` → `com.kirimin.app`
 - Kotlin package `MainActivity.kt` dipindah ke `frontend/android/app/src/main/kotlin/com/kirimin/app/`
-- `backend/public/.well-known/assetlinks.json` → `package_name` diupdate ke `com.kirimin.app` (perlu di-push ke Railway agar live)
+- `backend/public/.well-known/assetlinks.json` → `package_name` diupdate ke `com.kirimin.app` — **sudah di-push & live** (terverifikasi 2026-07-15)
 - `sprint/CONFIG.md` → Application ID diupdate
 - `frontend/android/app/src/main/res/values/strings.xml` dibuat dengan `asset_statements` menunjuk ke `assetlinks.json` live
 - `AndroidManifest.xml` sudah ditambah `<meta-data android:name="asset_statements">` di dalam `<activity>`
