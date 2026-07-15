@@ -11,7 +11,7 @@ class MonogramAvatar extends StatelessWidget {
   final bool selected;
   const MonogramAvatar({
     required this.initials,
-    this.size = 44,
+    this.size = KSize.avatarSm,
     this.selected = false,
     super.key,
   });

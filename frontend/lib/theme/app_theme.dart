@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'tokens.dart';
 import 'text_theme.dart';
 
@@ -36,8 +35,8 @@ ThemeData buildTheme({required bool dark}) {
       scrolledUnderElevation: 0,
       centerTitle: false,
       foregroundColor: p.ink,
-      titleTextStyle: GoogleFonts.inter(
-          fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.8, color: p.ink),
+      titleTextStyle: TextStyle(
+          fontFamily: 'Manrope', fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.8, color: p.ink),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -48,7 +47,8 @@ ThemeData buildTheme({required bool dark}) {
         elevation: 0,
         minimumSize: const Size.fromHeight(52),
         shape: const StadiumBorder(),
-        textStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: -0.14),
+        textStyle: const TextStyle(
+            fontFamily: 'Manrope', fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: -0.14),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
@@ -58,7 +58,7 @@ ThemeData buildTheme({required bool dark}) {
       filled: true,
       fillColor: p.surface1,
       contentPadding: const EdgeInsets.symmetric(horizontal: KSpace.md, vertical: KSpace.sm),
-      hintStyle: GoogleFonts.inter(fontSize: 15, color: p.inkMuted),
+      hintStyle: TextStyle(fontFamily: 'Manrope', fontSize: 15, color: p.inkMuted),
       border: OutlineInputBorder(borderRadius: KRadius.input, borderSide: BorderSide.none),
       enabledBorder: OutlineInputBorder(borderRadius: KRadius.input, borderSide: BorderSide.none),
       focusedBorder: OutlineInputBorder(

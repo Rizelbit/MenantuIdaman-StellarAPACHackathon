@@ -155,7 +155,7 @@ class _BalanceHero extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Total saldo', style: text.labelSmall?.copyWith(color: p.inkMuted)),
+        Text('Total saldo', style: text.titleMedium?.copyWith(color: p.inkMuted)),
         const SizedBox(height: KSpace.xs),
         Row(
           children: [
@@ -195,7 +195,7 @@ class _PromoCarousel extends StatelessWidget {
     if (promos.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
-      height: 170,
+      height: 176,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final cardWidth = constraints.maxWidth - KSpace.xxl;
@@ -249,7 +249,7 @@ class _PromoCard extends StatelessWidget {
                       ),
                       child: Text(
                         promo.badge!,
-                        style: text.labelSmall?.copyWith(color: onColor),
+                        style: text.bodySmall?.copyWith(color: onColor),
                       ),
                     ),
                   Text(
@@ -336,7 +336,7 @@ class _FamilyShortcuts extends StatelessWidget {
           ],
         ),
         SizedBox(
-          height: 84,
+          height: 92,
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
@@ -375,11 +375,11 @@ class _ContactShortcut extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            MonogramAvatar(initials: contact.initials),
+            MonogramAvatar(initials: contact.initials, size: KSize.avatarMd),
             const SizedBox(height: KSpace.xs),
             Text(
               contact.name,
-              style: text.labelSmall?.copyWith(color: p.ink),
+              style: text.bodySmall?.copyWith(color: p.ink),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -419,7 +419,7 @@ class _AddContactShortcut extends StatelessWidget {
               child: Icon(Icons.add, size: 20, color: p.ink),
             ),
             const SizedBox(height: KSpace.xs),
-            Text('Tambah', style: text.labelSmall?.copyWith(color: p.ink)),
+            Text('Tambah', style: text.bodySmall?.copyWith(color: p.ink)),
           ],
         ),
       ),

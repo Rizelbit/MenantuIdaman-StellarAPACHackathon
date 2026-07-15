@@ -43,8 +43,8 @@ class TransactionRow extends StatelessWidget {
     final leading = avatarInitials != null
         ? MonogramAvatar(initials: avatarInitials!)
         : Container(
-            width: 44,
-            height: 44,
+            width: KSize.avatarSm,
+            height: KSize.avatarSm,
             alignment: Alignment.center,
             decoration: BoxDecoration(color: p.surface1, shape: BoxShape.circle),
             child: Icon(icon, size: 20, color: p.ink),
@@ -54,7 +54,7 @@ class TransactionRow extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          height: 64,
+          height: KSize.rowHeight,
           child: InkWell(
             onTap: onTap,
             child: Row(
@@ -66,10 +66,10 @@ class TransactionRow extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: text.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(title, style: text.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 2),
                       Text(subtitle,
-                          style: text.bodySmall?.copyWith(color: p.inkMuted),
+                          style: microStyle(p.inkMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis),
                     ],

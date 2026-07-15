@@ -108,7 +108,7 @@ class _SectionHeader extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: KSpace.lg, bottom: KSpace.xs),
-      child: Text(label, style: text.labelSmall?.copyWith(color: p.inkMuted)),
+      child: Text(label, style: text.titleMedium?.copyWith(color: p.inkMuted)),
     );
   }
 }

@@ -160,7 +160,7 @@ class _ParticipantStatusRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              MonogramAvatar(initials: _initialsOf(participant.name), size: 36),
+              MonogramAvatar(initials: _initialsOf(participant.name), size: KSize.avatarSm),
               const SizedBox(width: KSpace.sm),
               Expanded(
                 child: Column(

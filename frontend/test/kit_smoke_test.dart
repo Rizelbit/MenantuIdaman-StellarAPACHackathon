@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kirimin/models/models.dart';
-import 'package:kirimin/theme/app_theme.dart';
-import 'package:kirimin/widgets/widgets.dart';
+import 'package:Kirimin/models/models.dart';
+import 'package:Kirimin/theme/app_theme.dart';
+import 'package:Kirimin/widgets/widgets.dart';
 
 /// Smoke test untuk seluruh kit UI: tiap widget di-pump lewat barrel export
 /// `widgets.dart` di atas tema gelap dan dipastikan render tanpa error/overflow.

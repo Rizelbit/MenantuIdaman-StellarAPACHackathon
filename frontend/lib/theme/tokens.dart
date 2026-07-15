@@ -80,3 +80,17 @@ class KSpace {
   /// Standard screen horizontal padding (20px).
   static const screenH = EdgeInsets.symmetric(horizontal: lg);
 }
+
+/// Fixed component sizes (avatars, icon tiles, row heights) — pinned values,
+/// not a range. See docs/design/DESIGN-2.md components section.
+class KSize {
+  KSize._();
+  static const iconButton = 40.0; // button-icon-circular
+  static const quickAction = 56.0; // quick-action-primary/secondary
+  static const avatarSm = 40.0; // avatar-monogram in transaction/list rows
+  static const avatarMd = 52.0; // avatar-monogram in family shortcuts row
+  static const avatarLg = 56.0; // avatar-monogram showcase / selected
+  static const iconTileLg = 72.0; // Welcome screen Face ID tile
+  static const brandBadge = 64.0; // Welcome screen mark
+  static const rowHeight = 64.0; // transaction-row target
+}

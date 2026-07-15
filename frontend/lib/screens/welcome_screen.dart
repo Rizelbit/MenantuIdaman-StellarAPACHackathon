@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:local_auth/local_auth.dart';
 
 import '../app/env.dart';
 import '../app/router.dart';
 import '../state/auth_controller.dart';
+import '../theme/tokens.dart';
 
 /// Welcome / Face ID login — the single entry surface shown before Home when
 /// the user isn't signed in. No onboarding: one biometric prompt, with a
@@ -125,9 +125,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   const Spacer(flex: 5),
                   const _SendBadge(),
                   const SizedBox(height: 18),
-                  Text(
+                  const Text(
                     'Kirimin',
-                    style: GoogleFonts.manrope(
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.9,
@@ -135,12 +136,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  SizedBox(
+                  const SizedBox(
                     width: 220,
                     child: Text(
                       'Send to family and split bills without the hassle.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.manrope(
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
                         fontSize: 15,
                         height: 1.4,
                         fontWeight: FontWeight.w400,
@@ -152,18 +154,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
                   // --- Bottom-anchored login group ---
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: KSize.iconTileLg,
+                    height: KSize.iconTileLg,
                     decoration: BoxDecoration(
                       color: _surface,
-                      borderRadius: BorderRadius.circular(22),
+                      borderRadius: BorderRadius.circular(KRadius.xxl),
                     ),
                     child: const Center(child: _FaceIdGlyph()),
                   ),
                   const SizedBox(height: 10),
-                  Text(
+                  const Text(
                     'Log in with Face ID',
-                    style: GoogleFonts.manrope(
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: _muted,
@@ -174,10 +177,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     Text(
                       _error!,
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.manrope(
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFFEF4444),
+                        color: Color(0xFFEF4444),
                       ),
                     ),
                   ],
@@ -202,9 +206,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                                 color: _canvas,
                               ),
                             )
-                          : Text(
+                          : const Text(
                               'Log in with Face ID',
-                              style: GoogleFonts.manrope(
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: _canvas,
@@ -215,9 +220,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   const SizedBox(height: 14),
                   TextButton(
                     onPressed: _busy ? null : _usePasscode,
-                    child: Text(
+                    child: const Text(
                       'Use passcode instead',
-                      style: GoogleFonts.manrope(
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: _accent,
@@ -241,8 +247,8 @@ class _SendBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 64,
-        height: 64,
+        width: KSize.brandBadge,
+        height: KSize.brandBadge,
         decoration: const BoxDecoration(
           color: Color(0xFF0099FF),
           shape: BoxShape.circle,
@@ -321,8 +327,8 @@ class _FaceIdPainter extends CustomPainter {
       final path = Path()
         ..moveTo(p(cx + dx * arm, cy).dx, p(cx + dx * arm, cy).dy)
         ..lineTo(p(cx + dx * r, cy).dx, p(cx + dx * r, cy).dy)
-        ..quadraticBezierTo(
-            p(cx, cy).dx, p(cx, cy).dy, p(cx, cy + dy * r).dx, p(cx, cy + dy * r).dy)
+        ..quadraticBezierTo(p(cx, cy).dx, p(cx, cy).dy, p(cx, cy + dy * r).dx,
+            p(cx, cy + dy * r).dy)
         ..lineTo(p(cx, cy + dy * arm).dx, p(cx, cy + dy * arm).dy);
       canvas.drawPath(path, paint);
     }
