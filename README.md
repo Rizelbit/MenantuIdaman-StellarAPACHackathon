@@ -210,8 +210,6 @@ APACStellar/
 | POST | `/tx/submit` | Submit the signed tx |
 | GET | `/wallet/:userId/balance` | Fetch the wallet balance |
 
-Full details: `docs/frontend/backend_handoff.md` §3 and `docs/Flutter-Boilerplate-README.md` §8.
-
 ---
 
 ## Limitations & Future Work
