@@ -59,7 +59,7 @@ methods + building the endpoints — you do **not** touch screens.
 |---|---|---|
 | `lib/app/env.dart` | Build-time config (`backendUrl`, `rpId`, `useMock`, FX rate, fee) | Flip mock→real; point at your backend |
 | `lib/state/providers.dart` | **The DI seam** — picks Mock vs Real service | Where mock/real is chosen |
-| `lib/services/wallet_api.dart` | **Real HTTP client** (dio). 5 methods done, 6 are `UnimplementedError` | The contract + the frontend work |
+| `lib/services/wallet_api.dart` | **Real HTTP client** (dio). All 11 methods implemented | The endpoint paths + wire shapes |
 | `lib/services/mock_services.dart` | Mock implementations returning sample data | **Spec-by-example**: each `Ok(...)` shows the exact shape a real endpoint must return |
 | `lib/services/mock_data.dart` | The seed sample data | Realistic fixtures to match |
 | `lib/services/passkey_service.dart` | Native WebAuthn (Face ID) — raw envelopes only | Auth path (see backend_handoff.md) |
@@ -72,8 +72,8 @@ methods + building the endpoints — you do **not** touch screens.
 
 ## 2. The one switch: mock → real
 
-The frontend needs **no code change** to talk to a real backend *for the
-endpoints that are already implemented*. Pass three build-time defines:
+The frontend needs **no code change** to talk to a real backend — every
+`WalletApi` method is now a real dio call. Pass three build-time defines:
 
 ```bash
 flutter run \
@@ -97,11 +97,13 @@ flutter run \
 
 ### 2.1 Two groups of endpoints — this is the important part
 
-Not all seams are equal. Split the work into two groups:
+Every `WalletApi` method now makes a real dio call and parses the response, so
+**the remaining work is entirely on the backend: build the endpoints.** The two
+groups differ only in *where their contract lives* and *what they touch*.
 
-**Group A — Auth + Send (real client already built).** The real `WalletApi`
-methods are fully implemented HTTP calls; you only need to build the backend
-endpoints. **Contract is owned by [`backend_handoff.md`](../frontend/backend_handoff.md).**
+**Group A — Auth + Send (Stellar/Soroban).** Passkey registration, wallet
+creation, and the send/settle path. **Contract owned by
+[`backend_handoff.md`](../frontend/backend_handoff.md) §3.**
 
 | `WalletApi` method | Endpoint | Client |
 |---|---|---|
@@ -111,24 +113,23 @@ endpoints. **Contract is owned by [`backend_handoff.md`](../frontend/backend_han
 | `submitSignedTx` | `POST /tx/submit` | ✅ implemented |
 | `getBalanceUsd` | `GET /wallet/:userId/balance` | ✅ implemented |
 
-**Group B — Home / Contacts / Requests / Splits (client is a stub).** These real
-`WalletApi` methods currently `throw UnimplementedError()`. Wiring them needs
-**both** (a) a backend endpoint **and** (b) a small frontend change: implement the
-method (dio call) + add `fromJson` to the model. **This document specifies these**
-(§6). Until you do this, flipping `USE_MOCK=false` will make Home/Contacts/
-Request/Split throw.
+**Group B — Home / Contacts / Requests / Splits (plain REST).** Ordinary
+JSON-over-HTTP; **contract specified in §6 of this document.** The client methods
+and the model `fromJson`/`toJson` are already in place (`wallet_api.dart`,
+`models.dart`) — you only build the endpoints to the shapes in §6.
 
 | `WalletApi` method | Endpoint | Client |
 |---|---|---|
-| `getHomeFeed` | `GET /home/:userId/feed` | ⚠️ `UnimplementedError` |
-| `listContacts` | `GET /contacts/:userId` | ⚠️ `UnimplementedError` |
-| `addContact` | `POST /contacts` | ⚠️ `UnimplementedError` |
-| `createRequest` | `POST /requests` | ⚠️ `UnimplementedError` |
-| `createSplit` | `POST /splits` | ⚠️ `UnimplementedError` |
-| `getSplit` | `GET /splits/:id` | ⚠️ `UnimplementedError` |
+| `getHomeFeed` | `GET /home/:userId/feed` | ✅ implemented |
+| `listContacts` | `GET /contacts/:userId` | ✅ implemented |
+| `addContact` | `POST /contacts` | ✅ implemented |
+| `createRequest` | `POST /requests` | ✅ implemented |
+| `createSplit` | `POST /splits` | ✅ implemented |
+| `getSplit` | `GET /splits/:id` | ✅ implemented |
 
 **Recommended rollout:** ship Group A first (onboarding + send end-to-end on real
-Stellar), then Group B endpoint-by-endpoint. Each Group B endpoint is independent.
+Stellar), then Group B endpoint-by-endpoint — each is independent, and the app
+picks it up the moment the endpoint returns the §6 shape.
 
 ---
 
@@ -164,16 +165,16 @@ unauthenticated → `/welcome`; once signed in, leaving splash/welcome/passcode 
 All models are in `lib/models/models.dart`. **Money fields are IDR** (`amountIdr`,
 `balanceIdr`, `totalIdr`, `shareIdr`) except the wallet's on-chain `balanceUsd`.
 
-| Model | Key fields | JSON today |
+| Model | Key fields | Serialization |
 |---|---|---|
-| `Wallet` | `userId`, `contractAddress` *(internal, never shown)*, `balanceUsd` | ✅ has `fromJson` |
-| `AppTransaction` | `id`, `counterpartyName`, `amountIdr`, `createdAt`, `status`, `direction`, `reference?`, `note?` | ❌ none |
-| `Contact` | `id`, `name`, `relation`, `initials`, `accountRef`, `isFavorite`, `lastSentAt?` | ❌ none |
-| `PromoBanner` | `id`, `title`, `subtitle`, `ctaLabel`, `deepLink`, `badge?`, `spotlight` | ❌ none |
-| `MoneyRequest` | `id`, `fromContactId`, `amountIdr`, `note?`, `status`, `createdAt` | ❌ none |
-| `SplitParticipant` | `contactId`, `name`, `shareIdr`, `isSelf`, `status` | ❌ none |
-| `SplitBill` | `id`, `title`, `totalIdr`, `createdAt`, `participants[]` (+ derived `collectedIdr`, `isBalanced`) | ❌ none |
-| `HomeFeed` | `balanceIdr`, `greetingName`, `accountRef`, `promos[]`, `favoriteContacts[]`, `recentTransactions[]` | ❌ none |
+| `Wallet` | `userId`, `contractAddress` *(internal, never shown)*, `balanceUsd` | ✅ `fromJson` |
+| `AppTransaction` | `id`, `counterpartyName`, `amountIdr`, `createdAt`, `status`, `direction`, `reference?`, `note?` | ✅ `fromJson` |
+| `Contact` | `id`, `name`, `relation`, `initials`, `accountRef`, `isFavorite`, `lastSentAt?` | ✅ `fromJson` |
+| `PromoBanner` | `id`, `title`, `subtitle`, `ctaLabel`, `deepLink`, `badge?`, `spotlight` | ✅ `fromJson` |
+| `MoneyRequest` | `id`, `fromContactId`, `amountIdr`, `note?`, `status`, `createdAt` | ✅ `fromJson` |
+| `SplitParticipant` | `contactId`, `name`, `shareIdr`, `isSelf`, `status` | ✅ `fromJson` + `toJson` |
+| `SplitBill` | `id`, `title`, `totalIdr`, `createdAt`, `participants[]` (+ derived `collectedIdr`, `isBalanced`) | ✅ `fromJson` |
+| `HomeFeed` | `balanceIdr`, `greetingName`, `accountRef`, `promos[]`, `favoriteContacts[]`, `recentTransactions[]` | ✅ `fromJson` |
 | `PasskeyAttestation` / `PasskeyAssertion` | WebAuthn envelopes | ✅ has `toJson` |
 
 **Enum wire values** (send these exact lowercase strings):
@@ -183,32 +184,33 @@ All models are in `lib/models/models.dart`. **Money fields are IDR** (`amountIdr
 - `ParticipantStatus` → `pending` | `paid`
 - `SpotlightVariant` → `aurora` | `sunset`
 
-> **The gap:** the Group B response models have **no `fromJson`**. Wiring a Group
-> B endpoint means adding a `fromJson` to the model **and** implementing the
-> `WalletApi` method to parse it. §6 gives copy-pasteable shapes and an example.
+> **Already in place:** every Group B model now has `fromJson` (and
+> `SplitParticipant` has `toJson` for the split-create body), and the `WalletApi`
+> methods parse them. So the frontend is ready — §6 gives the exact JSON your
+> endpoints must return.
 
 ---
 
 ## 5. Screens → data map (the integration cheat-sheet)
 
 For each surface: what it shows, the Riverpod entry point, the `WalletApi`
-method(s) it triggers, the endpoint, and status. **✅** = real client done (build
-backend only). **⚠️** = Group B (build backend **and** implement client method).
-**🔵** = static/local, no API yet.
+method(s) it triggers, the endpoint, and status. **✅** = client implemented —
+build the backend endpoint only (Group A contract in `backend_handoff.md`, Group B
+in §6). **🔵** = static/local, no API yet.
 
 | Screen / flow | State entry point | `WalletApi` method(s) | Endpoint(s) | Status |
 |---|---|---|---|---|
 | **Welcome / Passcode / Onboarding** | `authController.registerWithPasskey()` | `registerOptions` → `passkey.register` → `createWallet` | `GET /passkey/register-options`, `POST /wallet/create` | ✅ |
-| **Home** (balance, promos, favorites, recent) | `homeFeedProvider` (`FutureProvider`) | `getHomeFeed(userId)` | `GET /home/:userId/feed` | ⚠️ |
-| **History** (full list, grouped by day) | `homeFeedProvider.recentTransactions` | *(same feed)* | *(reuses feed — see §7.4)* | ⚠️ |
-| **Transaction detail** | `homeFeedProvider` (find by `id`) | *(same feed)* | *(no `GET /tx/:id` yet — see §7.4)* | ⚠️ |
+| **Home** (balance, promos, favorites, recent) | `homeFeedProvider` (`FutureProvider`) | `getHomeFeed(userId)` | `GET /home/:userId/feed` | ✅ |
+| **History** (full list, grouped by day) | `homeFeedProvider.recentTransactions` | *(same feed)* | *(reuses feed — see §7.4)* | ✅ |
+| **Transaction detail** | `homeFeedProvider` (find by `id`) | *(same feed)* | *(no `GET /tx/:id` yet — see §7.4)* | ✅ |
 | **Send** (amount → review → success) | `sendController.confirmAndSend()` | `buildSendTx` → `passkey.authenticate` → `submitSignedTx` → `getBalanceUsd` | `POST /tx/build`, `POST /tx/submit`, `GET /wallet/:id/balance` | ✅ |
 | **Receive** (QR, Kirimin ID, account) | *none* — hardcoded in `receive_screen.dart` | — | — | 🔵 |
-| **Request** (amount → confirm → sent) | `requestController.submit()` | `createRequest` | `POST /requests` | ⚠️ |
-| **Split** (create → shares → confirm) | `splitController.submit()` | `createSplit` | `POST /splits` | ⚠️ |
-| **Split detail** (`/split/detail/:id`) | `splitByIdProvider(id)` | `getSplit(id)` | `GET /splits/:id` | ⚠️ |
-| **Family contacts** (list, add) | `contactsController` | `listContacts`, `addContact` | `GET /contacts/:userId`, `POST /contacts` | ⚠️ |
-| **Promo detail** (`/promo/:id`) | `homeFeedProvider.promos` (find by `id`) | *(part of feed)* | *(part of feed)* | ⚠️ |
+| **Request** (amount → confirm → sent) | `requestController.submit()` | `createRequest` | `POST /requests` | ✅ |
+| **Split** (create → shares → confirm) | `splitController.submit()` | `createSplit` | `POST /splits` | ✅ |
+| **Split detail** (`/split/detail/:id`) | `splitByIdProvider(id)` | `getSplit(id)` | `GET /splits/:id` | ✅ |
+| **Family contacts** (list, add) | `contactsController` | `listContacts`, `addContact` | `GET /contacts/:userId`, `POST /contacts` | ✅ |
+| **Promo detail** (`/promo/:id`) | `homeFeedProvider.promos` (find by `id`) | *(part of feed)* | *(part of feed)* | ✅ |
 
 ### 5.1 Flow notes that affect the backend
 
@@ -314,33 +316,23 @@ Response (both create and get):
 don't send them. The split-detail screen shows the collected/total progress from
 these.
 
-### 6.6 The frontend half (per Group B endpoint)
+### 6.6 The frontend half — already implemented
 
-Two small edits to go from stub → live. Example for the home feed:
-
-**a) Add `fromJson` to the models** (`lib/models/models.dart`):
+The client work is **done**. `lib/models/models.dart` has `fromJson` for
+`HomeFeed`, `Contact`, `AppTransaction`, `PromoBanner`, `MoneyRequest`,
+`SplitBill`, and `SplitParticipant` (plus `SplitParticipant.toJson` for the
+split-create body), with enums parsed by wire name and a safe fallback. Each
+`WalletApi` method is a guarded dio call, e.g.:
 ```dart
-factory Contact.fromJson(Map<String, dynamic> j) => Contact(
-      id: j['id'], name: j['name'], relation: j['relation'],
-      initials: j['initials'], accountRef: j['accountRef'],
-      isFavorite: j['isFavorite'] ?? false,
-      lastSentAt: j['lastSentAt'] == null ? null : DateTime.parse(j['lastSentAt']),
-    );
-// …and AppTransaction.fromJson, PromoBanner.fromJson, HomeFeed.fromJson, etc.,
-// mapping the enum strings (e.g. TxStatus.values.byName(j['status'])).
-```
-
-**b) Implement the `WalletApi` method** (`lib/services/wallet_api.dart`) — replace
-the `throw UnimplementedError()` with a guarded dio call:
-```dart
-@override
 Future<Result<HomeFeed>> getHomeFeed(String userId) => _guard(() async {
       final r = await _dio.get('/home/$userId/feed');
       return HomeFeed.fromJson(r.data as Map<String, dynamic>);
     });
 ```
-`_guard` already maps errors to `AppFailure`. `mock_services.dart` is the shape
-oracle: your endpoint must return what the corresponding `Mock*` method returns.
+`_guard` maps errors to `AppFailure`. `mock_services.dart` remains the shape
+oracle: your endpoint must return exactly what the corresponding `Mock*` method
+returns. Nothing more is needed on the phone — return the §6 shapes and the
+screens light up.
 
 ---
 
@@ -428,9 +420,9 @@ no passkey); the auth/send path still needs a physical device for real passkeys.
 - [ ] `/.well-known/` served from the `RP_ID` domain (§7.7)
 
 **Frontend — one-time work to accept Group B data**
-- [ ] Add `fromJson` to `Contact`, `AppTransaction`, `PromoBanner`, `MoneyRequest`,
-      `SplitParticipant`, `SplitBill`, `HomeFeed` (§6.6)
-- [ ] Implement the 6 `UnimplementedError` `WalletApi` methods (§6.6)
+- [x] `fromJson` added to `Contact`, `AppTransaction`, `PromoBanner`, `MoneyRequest`,
+      `SplitParticipant` (+ `toJson`), `SplitBill`, `HomeFeed` (§6.6)
+- [x] The 6 `WalletApi` methods implemented as guarded dio calls (§6.6)
 - [ ] Surface `Err` in `requestController.submit` / `splitController.submit` (§5.1)
 - [ ] Confirm IDR-vs-USD wire decision (§7.2)
 
