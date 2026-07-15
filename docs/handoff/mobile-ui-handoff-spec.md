@@ -229,10 +229,11 @@ in §6). **🔵** = static/local, no API yet.
 - **Favorites toggle is local-only:** `contactsController.toggleFavorite`
   mutates state but calls no API (`contacts_controller.dart:32-37`), so it resets
   on reload. Add a persistence endpoint if favorites must stick (§7.3).
-- **Request / Split submit currently swallow errors:** both do `case Err(): break;`
-  (`request_controller.dart:56`, `split_controller.dart:112`) because the mock
-  always succeeds. When you wire real endpoints that can fail, surface the error
-  (§7.1) — otherwise the UI advances as if it worked.
+- **Request / Split submit surface errors:** both `submit()` now return
+  `AppFailure?`; the confirm screens show a SnackBar and **stop navigation** on
+  failure (`request_controller.dart`, `split_controller.dart`,
+  `request_confirm_screen.dart`, `split_confirm_screen.dart`). A real backend
+  failure is no longer silent — return a non-2xx and the user sees the message.
 
 ---
 
@@ -343,9 +344,9 @@ Every service method returns `Future<Result<T>>` = `Ok(value)` or
 `Err(AppFailure)` (`lib/core/result.dart`). `AppFailure.message` is user-facing;
 `cause` is for logs only. Standard failures: `AppFailure.network`,
 `AppFailure.passkeyCancelled`, `AppFailure.generic`. **Return proper non-2xx**
-so `_guard` produces the right message. Note the two controllers that currently
-ignore `Err` (Request/Split, §5.1) — decide how those should surface once the
-backend can actually fail.
+so `_guard` produces the right message; every screen already surfaces
+`AppFailure.message` — Send via its phase machine, Request/Split via a SnackBar,
+and the list screens (Home/History/Split detail) via a retry state.
 
 ### 7.2 Money & units
 `lib/core/money.dart` is the single source of truth. UI is **always IDR**; the
@@ -423,7 +424,7 @@ no passkey); the auth/send path still needs a physical device for real passkeys.
 - [x] `fromJson` added to `Contact`, `AppTransaction`, `PromoBanner`, `MoneyRequest`,
       `SplitParticipant` (+ `toJson`), `SplitBill`, `HomeFeed` (§6.6)
 - [x] The 6 `WalletApi` methods implemented as guarded dio calls (§6.6)
-- [ ] Surface `Err` in `requestController.submit` / `splitController.submit` (§5.1)
+- [x] Surface `Err` in `requestController.submit` / `splitController.submit` (§5.1)
 - [ ] Confirm IDR-vs-USD wire decision (§7.2)
 
 **Go-live**
