@@ -2,18 +2,25 @@ import cors from "cors";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import express, { type Request, type Response } from "express";
-import { Asset } from "@stellar/stellar-sdk";
-
-dotenv.config();
 
 import {
   bridge,
   getKit,
   getServer,
-  USDC_ISSUER,
+  getUsdcBalance,
   waitForBridge,
 } from "./passkey.js";
-import { store, registrationStore, txStore } from "./store.js";
+import {
+  contactStore,
+  requestStore,
+  splitStore,
+  store,
+  transactionStore,
+  registrationStore,
+  txStore,
+} from "./store.js";
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
@@ -22,22 +29,10 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
-
-// SAC USDC address di testnet — dihitung dari USDC_ISSUER (SEP-41/CAP-46-6
-// deterministic derivation), bukan hardcode. Hardcode sebelumnya
-// (CBQHFCBIFPYBMV7CCMB3Y3I3IDP3UMP3XKZZGQZ2EVTESNQ6H7GNCNC) TERBUKTI SALAH —
-// tidak cocok dengan derivasi asli dari USDC_ISSUER, jadi transfer selalu
-// akan gagal (memanggil kontrak yang salah). Menghitung ulang di sini
-// mencegah kelas bug ini terulang kalau USDC_ISSUER pernah berubah.
-const USDC_SAC_ADDRESS =
-  process.env.USDC_SAC_ADDRESS ||
-  new Asset("USDC", USDC_ISSUER).contractId(NETWORK_PASSPHRASE);
+const USD_TO_IDR = 16350; // sinkron dengan frontend Env.usdToIdr
 
 // ---------------------------------------------------------------------------
 // Static: .well-known files untuk passkey native (iOS & Android)
-// `apple-app-site-association` tidak punya extension, jadi express.static
-// tidak bisa infer MIME type-nya dan default ke application/octet-stream.
-// iOS mensyaratkan Content-Type: application/json untuk file ini.
 // ---------------------------------------------------------------------------
 app.use(
   "/.well-known",
@@ -49,6 +44,47 @@ app.use(
     },
   })
 );
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+function initialsOf(name: string): string {
+  const trimmed = name.trim().toUpperCase();
+  if (trimmed.length === 0) return "?";
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) {
+    return trimmed.substring(0, trimmed.length >= 2 ? 2 : 1);
+  }
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function makeReference(): string {
+  const hex = crypto.randomBytes(3).toString("hex").toUpperCase();
+  return `KRM-${hex}`;
+}
+
+async function resolveRecipient(userId: string, recipient: string): Promise<string | null> {
+  // 1) recipient itu userId langsung
+  const byUserId = store.get(recipient);
+  if (byUserId) return byUserId.contractAddress;
+
+  // 2) recipient itu contract address
+  const byContract = store.all().find((u) => u.contractAddress === recipient);
+  if (byContract) return byContract.contractAddress;
+
+  // 3) recipient adalah nama kontak; gunakan accountRef-nya sebagai alamat penerima
+  const contact = contactStore.listByUser(userId).find((c) => c.name === recipient);
+  if (contact?.accountRef) {
+    const contactUser = store.get(contact.accountRef);
+    if (contactUser) return contactUser.contractAddress;
+    // accountRef bisa langsung contract address
+    if (contact.accountRef.startsWith("C")) return contact.accountRef;
+  }
+
+  // 4) fallback demo receiver
+  const demoReceiver = process.env.DEMO_RECEIVER_CONTRACT;
+  return demoReceiver || null;
+}
 
 // ---------------------------------------------------------------------------
 // Health check
@@ -70,22 +106,16 @@ app.get("/passkey/register-options", async (req: Request, res: Response) => {
 
   try {
     const kit = await getKit();
-
-    // Mulai createWallet di background — ini akan memanggil
-    // bridge.startRegistration() yang menyimpan options dan menunggu.
     const createPromise = kit.createWallet("Kirimin", userName);
 
-    // Tunggu sampai bridge punya registration options (max 15 detik)
     await waitForBridge(() => bridge.hasPendingRegistration(), 15000);
 
     const options = bridge.getRegistrationOptions()!;
-    // Konversi challenge ke base64url (tanpa padding)
     const challenge = Buffer.from(options.challenge, "base64")
       .toString("base64url")
       .replace(/=+$/, "");
 
-    // Simpan promise untuk dipakai di /wallet/create
-    registrationStore.set(userId, { createPromise });
+    registrationStore.set(userId, { userName, createPromise });
 
     return res.json({ challenge, userId });
   } catch (err) {
@@ -118,7 +148,6 @@ app.post("/wallet/create", async (req: Request, res: Response) => {
   }
 
   try {
-    // Selesaikan ceremony WebAuthn di bridge
     bridge.completeRegistration({
       id: attestation.credentialId,
       rawId: attestation.credentialId,
@@ -129,10 +158,8 @@ app.post("/wallet/create", async (req: Request, res: Response) => {
       type: "public-key",
     });
 
-    // Tunggu kit.createWallet() selesai
     const result = await pending.createPromise;
 
-    // Submit deploy tx via relayer (fee-sponsored)
     const srv = await getServer();
     const submitResult = await srv.send(result.signedTx);
     if (!submitResult.success) {
@@ -144,13 +171,12 @@ app.post("/wallet/create", async (req: Request, res: Response) => {
 
     console.log(`[wallet/create] wallet: ${result.contractId}`);
 
-    // Simpan mapping user ↔ wallet
     store.set(userId, {
       userId,
       contractAddress: result.contractId,
       credentialIds: [result.keyIdBase64],
       balanceUsd: 0,
-      userName: "",
+      userName: pending.userName,
     });
 
     registrationStore.delete(userId);
@@ -186,14 +212,7 @@ app.post("/tx/build", async (req: Request, res: Response) => {
     return res.status(404).json({ error: "Wallet not found" });
   }
 
-  // Resolve penerima
-  const allUsers = store.all();
-  const receiverRecord = allUsers.find((u) => u.userId !== userId);
-  const receiverContractAddress =
-    receiverRecord?.contractAddress ||
-    process.env.DEMO_RECEIVER_CONTRACT ||
-    "";
-
+  const receiverContractAddress = await resolveRecipient(userId, recipient);
   if (!receiverContractAddress) {
     return res.status(400).json({ error: "Penerima tidak ditemukan" });
   }
@@ -201,7 +220,6 @@ app.post("/tx/build", async (req: Request, res: Response) => {
   try {
     const kit = await getKit();
 
-    // Pastikan wallet ter-connect
     if (!kit.contractId || kit.contractId !== senderRecord.contractAddress) {
       const keyId = senderRecord.credentialIds[0];
       if (keyId) {
@@ -209,15 +227,18 @@ app.post("/tx/build", async (req: Request, res: Response) => {
       }
     }
 
-    // Hitung amount dalam stroops (1 USDC = 10_000_000 stroops)
     const amountStroops = BigInt(Math.round(amountUsd * 10_000_000));
+    const amountIdr = Math.round(amountUsd * USD_TO_IDR);
 
-    // Build transfer tx via SACClient
     const { SACClient } = await import("passkey-kit");
+    const { Asset } = await import("@stellar/stellar-sdk");
     const sacClient = new SACClient({
       rpcUrl: process.env.SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org",
       networkPassphrase: NETWORK_PASSPHRASE,
     });
+    const USDC_SAC_ADDRESS =
+      process.env.USDC_SAC_ADDRESS ||
+      new Asset("USDC", process.env.USDC_ISSUER || "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5").contractId(NETWORK_PASSPHRASE);
     const token = sacClient.getSACClient(USDC_SAC_ADDRESS);
 
     const tx = await token.transfer({
@@ -226,10 +247,8 @@ app.post("/tx/build", async (req: Request, res: Response) => {
       amount: amountStroops,
     });
 
-    // Sign tx dengan passkey — ini memicu bridge.startAuthentication()
     const signPromise = kit.sign(tx as any);
 
-    // Tunggu bridge punya authentication options
     await waitForBridge(() => bridge.hasPendingAuthentication(), 15000);
 
     const authOptions = bridge.getAuthenticationOptions()!;
@@ -238,9 +257,12 @@ app.post("/tx/build", async (req: Request, res: Response) => {
       .replace(/=+$/, "");
 
     const txId = crypto.randomUUID();
-
-    // Simpan pending tx
-    txStore.set(txId, { signPromise, userId });
+    txStore.set(txId, {
+      signPromise,
+      userId,
+      amountIdr,
+      counterpartyName: recipient,
+    });
 
     return res.json({
       txId,
@@ -277,7 +299,6 @@ app.post("/tx/submit", async (req: Request, res: Response) => {
   }
 
   try {
-    // Selesaikan ceremony authentication di bridge
     bridge.completeAuthentication({
       id: assertion.credentialId,
       rawId: assertion.credentialId,
@@ -289,10 +310,8 @@ app.post("/tx/submit", async (req: Request, res: Response) => {
       type: "public-key",
     });
 
-    // Tunggu kit.sign() selesai
     const signedTx = await pending.signPromise;
 
-    // Submit via relayer
     const srv = await getServer();
     const submitResult = await srv.send(signedTx as any);
     if (!submitResult.success) {
@@ -302,6 +321,29 @@ app.post("/tx/submit", async (req: Request, res: Response) => {
     }
 
     console.log(`[tx/submit] settled: ${submitResult.hash}`);
+
+    // Refresh balance & record transaction for the feed/history.
+    const userRecord = store.get(pending.userId);
+    if (userRecord) {
+      try {
+        const balanceUsd = await getUsdcBalance(userRecord.contractAddress);
+        userRecord.balanceUsd = balanceUsd;
+      } catch (balanceErr) {
+        console.error("[tx/submit] balance refresh failed:", balanceErr);
+      }
+
+      transactionStore.add({
+        id: txId,
+        userId: pending.userId,
+        counterpartyName: pending.counterpartyName || "Keluarga",
+        amountIdr: pending.amountIdr || 0,
+        createdAt: new Date(),
+        status: "settled",
+        direction: "send",
+        reference: makeReference(),
+      });
+    }
+
     txStore.delete(txId);
 
     return res.json({ txId, txHash: submitResult.hash });
@@ -323,8 +365,9 @@ app.get("/wallet/:userId/balance", async (req: Request, res: Response) => {
   }
 
   try {
-    // TODO: query actual balance dari chain
-    return res.json({ balanceUsd: userRecord.balanceUsd });
+    const balanceUsd = await getUsdcBalance(userRecord.contractAddress);
+    userRecord.balanceUsd = balanceUsd;
+    return res.json({ balanceUsd });
   } catch (err) {
     console.error("[balance] error:", err);
     return res.json({ balanceUsd: userRecord.balanceUsd });
@@ -334,13 +377,7 @@ app.get("/wallet/:userId/balance", async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 // 6) GET /home/:userId/feed
 // ---------------------------------------------------------------------------
-// Stub minimal — cukup untuk HomeScreen lolos dari homeFeedProvider tanpa error.
-// promos/favoriteContacts/recentTransactions sengaja kosong (belum ada
-// endpoint /contacts, /requests, /splits di backend; itu di luar scope MVP
-// "onboarding -> kirim uang -> SendSuccessScreen").
-const USD_TO_IDR = 16350; // sama dengan Env.usdToIdr statis di Flutter (frontend/lib/app/env.dart)
-
-app.get("/home/:userId/feed", (req: Request, res: Response) => {
+app.get("/home/:userId/feed", async (req: Request, res: Response) => {
   const { userId } = req.params;
   const userRecord = store.get(userId);
 
@@ -348,15 +385,250 @@ app.get("/home/:userId/feed", (req: Request, res: Response) => {
     return res.status(404).json({ error: "Wallet not found" });
   }
 
+  try {
+    const balanceUsd = await getUsdcBalance(userRecord.contractAddress);
+    userRecord.balanceUsd = balanceUsd;
+  } catch (err) {
+    console.error("[home/feed] balance refresh failed:", err);
+  }
+
+  const contacts = contactStore.listByUser(userId);
+  const recentTx = transactionStore.listByUser(userId).slice(0, 20);
+
   return res.json({
     balanceIdr: userRecord.balanceUsd * USD_TO_IDR,
     greetingName: userRecord.userName || "Kamu",
     accountRef: userRecord.contractAddress,
     promos: [],
-    favoriteContacts: [],
-    recentTransactions: [],
+    favoriteContacts: contacts.filter((c) => c.isFavorite).map(toContactJson),
+    recentTransactions: recentTx.map(toTransactionJson),
   });
 });
+
+// ---------------------------------------------------------------------------
+// 7) Contacts
+// ---------------------------------------------------------------------------
+app.get("/contacts/:userId", (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const contacts = contactStore.listByUser(userId);
+  return res.json(contacts.map(toContactJson));
+});
+
+app.post("/contacts", (req: Request, res: Response) => {
+  const { name, relation, accountRef } = req.body as {
+    name?: string;
+    relation?: string;
+    accountRef?: string;
+  };
+
+  if (!name?.trim()) {
+    return res.status(400).json({ error: "name required" });
+  }
+
+  // API tidak mensyaratkan userId di body; MVP berasumsi single-session demo
+  // dan mengaitkan ke user pertama yang ada, atau 'me' bila belum ada wallet.
+  const userId = store.all()[0]?.userId || "me";
+
+  const contact = contactStore.add({
+    id: crypto.randomUUID(),
+    userId,
+    name: name.trim(),
+    relation: relation?.trim() || "",
+    initials: initialsOf(name.trim()),
+    accountRef: accountRef?.trim() || "",
+    isFavorite: false,
+  });
+
+  return res.status(201).json(toContactJson(contact));
+});
+
+app.patch("/contacts/:id/favorite", (req: Request, res: Response) => {
+  const { id } = req.params;
+  const contact = contactStore.toggleFavorite(id);
+  if (!contact) {
+    return res.status(404).json({ error: "Contact not found" });
+  }
+  return res.json(toContactJson(contact));
+});
+
+// ---------------------------------------------------------------------------
+// 8) Requests
+// ---------------------------------------------------------------------------
+app.post("/requests", (req: Request, res: Response) => {
+  const { fromContactId, amountIdr, note } = req.body as {
+    fromContactId?: string;
+    amountIdr?: number;
+    note?: string;
+  };
+
+  if (!fromContactId || amountIdr == null || amountIdr <= 0) {
+    return res.status(400).json({ error: "fromContactId and amountIdr required" });
+  }
+
+  const userId = store.all()[0]?.userId || "me";
+
+  const request = requestStore.add({
+    id: crypto.randomUUID(),
+    userId,
+    fromContactId,
+    amountIdr,
+    note: note?.trim(),
+    status: "pending",
+    createdAt: new Date(),
+  });
+
+  return res.status(201).json(toRequestJson(request));
+});
+
+app.get("/requests/:userId", (req: Request, res: Response) => {
+  const { userId } = req.params;
+  return res.json(requestStore.listByUser(userId).map(toRequestJson));
+});
+
+// ---------------------------------------------------------------------------
+// 9) Splits
+// ---------------------------------------------------------------------------
+app.post("/splits", (req: Request, res: Response) => {
+  const { title, totalIdr, participants } = req.body as {
+    title?: string;
+    totalIdr?: number;
+    participants?: Array<{
+      contactId: string;
+      name: string;
+      shareIdr: number;
+      isSelf?: boolean;
+      status?: string;
+    }>;
+  };
+
+  if (!title?.trim() || totalIdr == null || totalIdr <= 0 || !participants) {
+    return res.status(400).json({ error: "title, totalIdr, and participants required" });
+  }
+
+  const userId = store.all()[0]?.userId || "me";
+
+  const split = splitStore.add({
+    id: crypto.randomUUID(),
+    userId,
+    title: title.trim(),
+    totalIdr,
+    participants: participants.map((p) => ({
+      contactId: p.contactId,
+      name: p.name,
+      shareIdr: p.shareIdr,
+      isSelf: p.isSelf ?? false,
+      status: p.status === "paid" ? "paid" : "pending",
+    })),
+    createdAt: new Date(),
+  });
+
+  return res.status(201).json(toSplitJson(split));
+});
+
+app.get("/splits/:id", (req: Request, res: Response) => {
+  const { id } = req.params;
+  const split = splitStore.get(id);
+  if (!split) {
+    return res.status(404).json({ error: "Split bill not found" });
+  }
+  return res.json(toSplitJson(split));
+});
+
+app.get("/splits", (req: Request, res: Response) => {
+  const userId = (req.query.userId as string) || store.all()[0]?.userId || "me";
+  return res.json(splitStore.listByUser(userId).map(toSplitJson));
+});
+
+// ---------------------------------------------------------------------------
+// JSON mappers (sinkron dengan frontend model)
+// ---------------------------------------------------------------------------
+function toContactJson(c: {
+  id: string;
+  name: string;
+  relation: string;
+  initials: string;
+  accountRef: string;
+  isFavorite: boolean;
+  lastSentAt?: Date;
+}) {
+  return {
+    id: c.id,
+    name: c.name,
+    relation: c.relation,
+    initials: c.initials,
+    accountRef: c.accountRef,
+    isFavorite: c.isFavorite,
+    lastSentAt: c.lastSentAt?.toISOString(),
+  };
+}
+
+function toRequestJson(r: {
+  id: string;
+  fromContactId: string;
+  amountIdr: number;
+  note?: string;
+  status: string;
+  createdAt: Date;
+}) {
+  return {
+    id: r.id,
+    fromContactId: r.fromContactId,
+    amountIdr: r.amountIdr,
+    note: r.note,
+    status: r.status,
+    createdAt: r.createdAt.toISOString(),
+  };
+}
+
+function toSplitJson(s: {
+  id: string;
+  title: string;
+  totalIdr: number;
+  createdAt: Date;
+  participants: Array<{
+    contactId: string;
+    name: string;
+    shareIdr: number;
+    isSelf: boolean;
+    status: string;
+  }>;
+}) {
+  return {
+    id: s.id,
+    title: s.title,
+    totalIdr: s.totalIdr,
+    createdAt: s.createdAt.toISOString(),
+    participants: s.participants.map((p) => ({
+      contactId: p.contactId,
+      name: p.name,
+      shareIdr: p.shareIdr,
+      isSelf: p.isSelf,
+      status: p.status,
+    })),
+  };
+}
+
+function toTransactionJson(t: {
+  id: string;
+  counterpartyName: string;
+  amountIdr: number;
+  createdAt: Date;
+  status: string;
+  direction: string;
+  reference?: string;
+  note?: string;
+}) {
+  return {
+    id: t.id,
+    counterpartyName: t.counterpartyName,
+    amountIdr: t.amountIdr,
+    createdAt: t.createdAt.toISOString(),
+    status: t.status,
+    direction: t.direction,
+    reference: t.reference,
+    note: t.note,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Start server

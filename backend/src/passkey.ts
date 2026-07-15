@@ -94,6 +94,7 @@ const RPC_URL = process.env.SOROBAN_RPC_URL || "https://soroban-testnet.stellar.
 
 let _kit: any = null;
 let _server: any = null;
+let _usdcToken: any = null;
 
 export async function getKit() {
   if (!_kit) {
@@ -123,6 +124,37 @@ export async function getServer() {
     });
   }
   return _server;
+}
+
+export async function getUsdcToken() {
+  if (!_usdcToken) {
+    const { SACClient } = await import("passkey-kit");
+    const sacClient = new SACClient({
+      rpcUrl: RPC_URL,
+      networkPassphrase: NETWORK_PASSPHRASE,
+    });
+    const { Asset } = await import("@stellar/stellar-sdk");
+    const USDC_SAC_ADDRESS =
+      process.env.USDC_SAC_ADDRESS ||
+      new Asset("USDC", USDC_ISSUER).contractId(NETWORK_PASSPHRASE);
+    _usdcToken = sacClient.getSACClient(USDC_SAC_ADDRESS);
+  }
+  return _usdcToken;
+}
+
+export async function getUsdcBalance(contractAddress: string): Promise<number> {
+  try {
+    const token = await getUsdcToken();
+    const tx = await token.balance({ id: contractAddress });
+    await tx.simulate();
+    const raw = BigInt((tx.result as bigint | string | number).toString());
+    const whole = raw / BigInt(10_000_000);
+    const fraction = raw % BigInt(10_000_000);
+    return Number(whole) + Number(fraction) / 10_000_000;
+  } catch (err) {
+    console.error("[getUsdcBalance] error:", err);
+    return 0;
+  }
 }
 
 export const USDC_ISSUER = process.env.USDC_ISSUER || "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
