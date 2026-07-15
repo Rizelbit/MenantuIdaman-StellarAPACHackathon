@@ -322,6 +322,33 @@ app.get("/wallet/:userId/balance", async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
+// 6) GET /home/:userId/feed
+// ---------------------------------------------------------------------------
+// Stub minimal — cukup untuk HomeScreen lolos dari homeFeedProvider tanpa error.
+// promos/favoriteContacts/recentTransactions sengaja kosong (belum ada
+// endpoint /contacts, /requests, /splits di backend; itu di luar scope MVP
+// "onboarding -> kirim uang -> SendSuccessScreen").
+const USD_TO_IDR = 16350; // sama dengan Env.usdToIdr statis di Flutter (frontend/lib/app/env.dart)
+
+app.get("/home/:userId/feed", (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const userRecord = store.get(userId);
+
+  if (!userRecord) {
+    return res.status(404).json({ error: "Wallet not found" });
+  }
+
+  return res.json({
+    balanceIdr: userRecord.balanceUsd * USD_TO_IDR,
+    greetingName: userRecord.userName || "Kamu",
+    accountRef: userRecord.contractAddress,
+    promos: [],
+    favoriteContacts: [],
+    recentTransactions: [],
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Start server
 // ---------------------------------------------------------------------------
 app.listen(PORT, () => {

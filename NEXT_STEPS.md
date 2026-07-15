@@ -4,6 +4,12 @@ Dokumen ini berisi **semua yang tidak bisa dikerjakan otomatis** dari environmen
 
 Ikuti urutan di bawah — tiap langkah punya dependency ke langkah sebelumnya.
 
+> **Update (2026-07-15):** Dua bug tambahan ditemukan & diperbaiki saat audit `SPRINT-TONIGHT.md` vs kode aktual:
+> 1. `frontend/lib/app/env.dart` punya flag `USE_MOCK` default `true` — tanpa `--dart-define=USE_MOCK=false`, app SELALU pakai data mock, tidak pernah menyentuh backend asli. `frontend/run-dev.sh` sekarang sudah otomatis pass flag ini.
+> 2. `HomeScreen` butuh `GET /home/:userId/feed` yang sebelumnya **tidak ada** di backend (padahal `docs/frontend/backend_handoff.md` bilang cuma butuh 5 endpoint) — tanpa ini, app **stuck di HomeScreen dengan tombol retry setelah onboarding berhasil**, tidak bisa lanjut ke Send. Sudah ditambahkan sebagai stub minimal di `backend/src/index.ts`.
+>
+> Detail lengkap ada di `SPRINT-TONIGHT.md`.
+
 ---
 
 ## 0. Push & deploy (WAJIB PALING AWAL)
@@ -119,6 +125,8 @@ adb logcat | grep -iE "asset|credential|fido"
 ```
 
 Tidak boleh ada error terkait Digital Asset Links / domain verification.
+
+**Untuk test flow kirim uang (bukan cuma onboarding):** backend butuh 2 wallet — pengirim dan penerima. `POST /tx/build` cari penerima dari user lain yang sudah terdaftar di memory store, atau fallback ke env `DEMO_RECEIVER_CONTRACT` (lihat `backend/src/index.ts` `/tx/build`). Kalau cuma test dengan 1 device/1 akun, isi `DEMO_RECEIVER_CONTRACT` di Railway dengan contract address wallet demo (lihat `sprint/CONFIG.md` § Stellar Testnet — "Demo Receiver Contract Address"). Kalau belum ada, kirim akan gagal dengan error "Penerima tidak ditemukan".
 
 Verifikasi eksternal (setelah langkah 0 — assetlinks.json harus sudah live):
 - [Google Digital Asset Links tester](https://developers.google.com/digital-asset-links/tools/generator) — masukkan package `com.kirimin.app` dan SHA-256 `54:4E:87:DD:1E:1C:29:A5:D1:A0:2F:65:28:AF:91:67:AC:40:D0:E1:CC:35:61:18:8C:55:9A:16:BA:B4:12:D3` (dari `sprint/CONFIG.md`).

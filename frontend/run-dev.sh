@@ -4,6 +4,7 @@ BACKEND_URL="https://menantuidaman-stellarapachackathon-production.up.railway.ap
 RP_ID="menantuidaman-stellarapachackathon-production.up.railway.app"
 
 flutter run \
+  --dart-define=USE_MOCK=false \
   --dart-define=BACKEND_URL=$BACKEND_URL \
   --dart-define=RP_ID=$RP_ID \
   "$@"
