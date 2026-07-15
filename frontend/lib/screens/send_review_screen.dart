@@ -9,9 +9,9 @@ import '../state/send_controller.dart';
 import '../theme/tokens.dart';
 import '../widgets/widgets.dart';
 
-/// Layar 2/3 alur kirim: rincian biaya transparan sebelum konfirmasi Face ID.
-/// Karena `Env.feeRate == 0` di demo ini, "mereka terima" selalu sama dengan
-/// "kamu kirim" — baris biaya tetap ditampilkan agar transparansi terlihat.
+/// Step 2/3 of the send flow: a transparent fee breakdown before the Face ID
+/// confirm. Since `Env.feeRate == 0` in this demo, "they receive" always equals
+/// "you send" — the fee row still shows so the transparency is visible.
 class SendReviewScreen extends ConsumerWidget {
   const SendReviewScreen({super.key});
 
@@ -22,9 +22,9 @@ class SendReviewScreen extends ConsumerWidget {
 
     final ok = await showBiometricConfirmSheet(
       context,
-      headline: 'Kirim ${quote.amountLabel}?',
-      subline: '${send.recipientName} akan menerima ${quote.receiveLabel}.',
-      confirmLabel: 'Tahan untuk konfirmasi',
+      headline: 'Send ${quote.amountLabel}?',
+      subline: '${send.recipientName} will receive ${quote.receiveLabel}.',
+      confirmLabel: 'Hold to confirm',
     );
     if (!ok || !context.mounted) return;
 
@@ -36,7 +36,7 @@ class SendReviewScreen extends ConsumerWidget {
       context.pushNamed(Routes.sendSuccess);
     } else if (state.phase == SendPhase.error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.errorMessage ?? 'Gagal mengirim.')),
+        SnackBar(content: Text(state.errorMessage ?? 'Couldn\'t send.')),
       );
     }
   }
@@ -54,25 +54,25 @@ class SendReviewScreen extends ConsumerWidget {
 
     if (quote == null) {
       return const AppScaffold(
-        title: 'Tinjau',
+        title: 'Review',
         child: EmptyView(
           icon: Icons.receipt_long_outlined,
-          title: 'Belum ada rincian kiriman',
-          subtitle: 'Kembali ke layar sebelumnya untuk isi nominal dulu.',
+          title: 'Nothing to review yet',
+          subtitle: 'Go back to enter an amount first.',
         ),
       );
     }
 
     return AppScaffold(
-      title: 'Tinjau',
+      title: 'Review',
       bottom: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Cukup satu Face ID',
+          Text('One quick Face ID and you\'re done',
               style: text.bodySmall?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.sm),
           PrimaryPillButton(
-            label: 'Tahan untuk konfirmasi',
+            label: 'Hold to confirm',
             icon: Icons.fingerprint,
             loading: busy,
             onPressed: busy ? null : () => _confirm(context, ref),
@@ -82,85 +82,47 @@ class SendReviewScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: KSpace.md),
-          SurfaceCard(
-            child: Row(
-              children: [
-                MonogramAvatar(
-                    initials:
-                        match?.initials ?? _initialsOf(send.recipientName)),
-                const SizedBox(width: KSpace.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(send.recipientName, style: text.bodyLarge),
-                      Text(match?.accountRef ?? '—',
-                          style: text.bodySmall?.copyWith(color: p.inkMuted)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: KSpace.md),
-          SurfaceCard(
+          const SizedBox(height: KSpace.lg),
+          // Centered recipient block (avatar over name over masked account).
+          Center(
             child: Column(
               children: [
-                _FeeRow(label: 'Kamu kirim', value: quote.amountLabel),
-                const SizedBox(height: KSpace.sm),
-                _FeeRow(label: 'Biaya', value: quote.feeLabel),
-                const SizedBox(height: KSpace.sm),
-                _FeeRow(label: 'Mereka terima', value: quote.receiveLabel),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: KSpace.sm),
-                  child: Divider(color: p.hairline, height: 1),
+                MonogramAvatar(
+                  initials: match?.initials ?? _initialsOf(send.recipientName),
+                  size: 64,
                 ),
-                _FeeRow(
-                    label: 'Total bayar', value: quote.amountLabel, bold: true),
+                const SizedBox(height: KSpace.sm),
+                Text(send.recipientName,
+                    style: text.titleMedium?.copyWith(fontSize: 18)),
+                if (match?.accountRef != null)
+                  Text(match!.accountRef,
+                      style: text.bodySmall?.copyWith(color: p.inkMuted)),
               ],
             ),
           ),
+          const SizedBox(height: KSpace.lg),
+          InfoRowsCard(
+            rows: [
+              InfoRow('You send', quote.amountLabel),
+              InfoRow('Fee', quote.feeLabel, valueColor: p.success),
+              InfoRow('They receive', quote.receiveLabel),
+              InfoRow('Total to pay', quote.amountLabel, emphasize: true),
+            ],
+          ),
           const SizedBox(height: KSpace.md),
           SurfaceCard(
+            padding:
+                const EdgeInsets.symmetric(horizontal: KSpace.md, vertical: KSpace.md),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Catatan', style: text.bodyMedium?.copyWith(color: p.inkMuted)),
-                Text('Buat kebutuhan keluarga', style: text.bodyMedium),
+                Text('Note', style: text.bodyMedium?.copyWith(color: p.inkMuted)),
+                Text('For groceries this month', style: text.bodyMedium),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _FeeRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool bold;
-  const _FeeRow({required this.label, required this.value, this.bold = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final p = KColors.of(Theme.of(context).brightness);
-    final text = Theme.of(context).textTheme;
-    final labelStyle = text.bodyMedium?.copyWith(
-      color: bold ? p.ink : p.inkMuted,
-      fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
-    );
-    final valueStyle = text.bodyMedium?.copyWith(
-      color: p.ink,
-      fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-    );
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: labelStyle),
-        Text(value, style: valueStyle),
-      ],
     );
   }
 }

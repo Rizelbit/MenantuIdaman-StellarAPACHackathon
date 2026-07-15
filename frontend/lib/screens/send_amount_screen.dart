@@ -33,14 +33,13 @@ class SendAmountScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Pilih penerima', style: text.titleMedium),
+                Text('Choose recipient', style: text.titleMedium),
                 const SizedBox(height: KSpace.md),
                 if (favorites.isEmpty)
                   const EmptyView(
                     icon: Icons.person_outline,
-                    title: 'Belum ada kontak favorit',
-                    subtitle:
-                        'Tambahkan kontak favorit dulu untuk kirim cepat.',
+                    title: 'No favorites yet',
+                    subtitle: 'Add a favorite contact for quick sends.',
                   )
                 else
                   for (final c in favorites)
@@ -89,14 +88,14 @@ class SendAmountScreen extends ConsumerWidget {
         context.pushNamed(Routes.sendReview);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pilih penerima dan nominal dulu')),
+          const SnackBar(content: Text('Pick a recipient and amount first')),
         );
       }
     }
 
     return AppScaffold(
-      title: 'Kirim',
-      bottom: PrimaryPillButton(label: 'Tinjau', onPressed: onReview),
+      title: 'Send',
+      bottom: PrimaryPillButton(label: 'Review', onPressed: onReview),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -117,12 +116,12 @@ class SendAmountScreen extends ConsumerWidget {
                       Text(
                           hasRecipient
                               ? send.recipientName
-                              : 'Pilih penerima',
+                              : 'Choose recipient',
                           style: text.bodyLarge),
                       Text(
                         hasRecipient
                             ? 'Kirimin · ${match?.accountRef ?? '—'}'
-                            : 'Ketuk untuk pilih dari kontak favorit',
+                            : 'Tap to pick a favorite',
                         style: text.bodySmall?.copyWith(color: p.inkMuted),
                       ),
                     ],
@@ -130,22 +129,19 @@ class SendAmountScreen extends ConsumerWidget {
                 ),
                 TextButton(
                   onPressed: () => _pickRecipient(context, ref),
-                  child: const Text('Ubah'),
+                  child: const Text('Change'),
                 ),
               ],
             ),
           ),
           const SizedBox(height: KSpace.xl),
-          Text('Nominal kirim',
+          Text('Amount to send',
               textAlign: TextAlign.center,
               style: text.titleMedium?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.xs),
           Center(child: MoneyText(amountIdr: send.amountIdr, size: 44)),
-          const SizedBox(height: KSpace.xs),
-          Center(
-            child: Text('Tanpa biaya admin',
-                style: text.bodySmall?.copyWith(color: p.inkMuted)),
-          ),
+          const SizedBox(height: KSpace.md),
+          const Center(child: StatusChip.success('No admin fee')),
           const SizedBox(height: KSpace.xl),
           AmountKeypad(onKey: onKey, onBackspace: onBackspace),
         ],

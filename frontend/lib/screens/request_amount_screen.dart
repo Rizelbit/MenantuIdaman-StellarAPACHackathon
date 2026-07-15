@@ -59,14 +59,13 @@ class _RequestAmountScreenState extends ConsumerState<RequestAmountScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Pilih kontak', style: text.titleMedium),
+                Text('Choose contact', style: text.titleMedium),
                 const SizedBox(height: KSpace.md),
                 if (favorites.isEmpty)
                   const EmptyView(
                     icon: Icons.person_outline,
-                    title: 'Belum ada kontak favorit',
-                    subtitle:
-                        'Tambahkan kontak favorit dulu untuk minta cepat.',
+                    title: 'No favorites yet',
+                    subtitle: 'Add a favorite contact for quick requests.',
                   )
                 else
                   for (final c in favorites)
@@ -95,7 +94,7 @@ class _RequestAmountScreenState extends ConsumerState<RequestAmountScreen> {
       context.pushNamed(Routes.requestConfirm);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pilih kontak dan nominal dulu')),
+        const SnackBar(content: Text('Pick a contact and amount first')),
       );
     }
   }
@@ -109,16 +108,16 @@ class _RequestAmountScreenState extends ConsumerState<RequestAmountScreen> {
     final contact = state.fromContact;
 
     return AppScaffold(
-      title: 'Minta',
+      title: 'Request',
       bottom: PrimaryPillButton(
-        label: 'Lanjut',
+        label: 'Continue',
         onPressed: () => _onLanjut(context, ref),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: KSpace.md),
-          Text('Dari', style: text.titleMedium?.copyWith(color: p.inkMuted)),
+          Text('From', style: text.titleMedium?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.xs),
           SurfaceCard(
             onTap: () => _pickContact(context, ref),
@@ -130,12 +129,12 @@ class _RequestAmountScreenState extends ConsumerState<RequestAmountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(contact?.name ?? 'Pilih kontak',
+                      Text(contact?.name ?? 'Choose contact',
                           style: text.bodyLarge),
                       Text(
                         contact != null
                             ? contact.accountRef
-                            : 'Ketuk untuk pilih dari kontak favorit',
+                            : 'Tap to pick a favorite',
                         style: text.bodySmall?.copyWith(color: p.inkMuted),
                       ),
                     ],
@@ -143,13 +142,13 @@ class _RequestAmountScreenState extends ConsumerState<RequestAmountScreen> {
                 ),
                 TextButton(
                   onPressed: () => _pickContact(context, ref),
-                  child: const Text('Ubah'),
+                  child: const Text('Change'),
                 ),
               ],
             ),
           ),
           const SizedBox(height: KSpace.lg),
-          Text('Nominal', style: text.titleMedium?.copyWith(color: p.inkMuted)),
+          Text('Amount', style: text.titleMedium?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.xs),
           TextField(
             controller: _amountCtrl,
@@ -162,13 +161,12 @@ class _RequestAmountScreenState extends ConsumerState<RequestAmountScreen> {
             },
           ),
           const SizedBox(height: KSpace.lg),
-          Text('Catatan', style: text.titleMedium?.copyWith(color: p.inkMuted)),
+          Text('Note', style: text.titleMedium?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.xs),
           TextField(
             controller: _noteCtrl,
             style: text.bodyLarge,
-            decoration:
-                const InputDecoration(hintText: 'Buat beli buku sekolah'),
+            decoration: const InputDecoration(hintText: 'For school books'),
             onChanged: ctrl.setNote,
           ),
         ],
