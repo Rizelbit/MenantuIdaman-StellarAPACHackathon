@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:Kirimin/main.dart';
+import 'package:kirimin/main.dart';
 
 /// Full-app smoke: pumps the real KiriminApp (mock mode) and drives
 /// welcome -> home -> history -> back. Verifies the app renders without

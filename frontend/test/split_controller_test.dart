@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:Kirimin/state/split_controller.dart';
-import 'package:Kirimin/models/models.dart';
+import 'package:kirimin/state/split_controller.dart';
+import 'package:kirimin/models/models.dart';
 
 void main() {
   ProviderContainer make() => ProviderContainer();
