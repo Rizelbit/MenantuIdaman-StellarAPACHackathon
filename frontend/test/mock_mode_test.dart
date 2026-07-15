@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:Kirimin/app/env.dart';
-import 'package:Kirimin/state/auth_controller.dart';
-import 'package:Kirimin/state/send_controller.dart';
+import 'package:kirimin/app/env.dart';
+import 'package:kirimin/state/auth_controller.dart';
+import 'package:kirimin/state/send_controller.dart';
 
 /// Regresi untuk bug "stuck di onboarding, network failure": dengan mode mock
 /// (Env.useMock, default true) seluruh alur backend selesai TANPA backend.
