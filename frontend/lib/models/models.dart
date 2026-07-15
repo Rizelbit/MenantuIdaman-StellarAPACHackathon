@@ -2,6 +2,14 @@
 /// UI dari sini — field on-chain (contractAddress) hanya dipakai internal.
 library;
 
+/// Parse an enum by its wire `name`, falling back when the value is unknown or
+/// missing — keeps deserialization resilient to backend enum drift.
+T _enumByName<T extends Enum>(List<T> values, Object? name, T fallback) =>
+    values.firstWhere((e) => e.name == name, orElse: () => fallback);
+
+/// JSON numbers arrive as int or double; normalize to double.
+double _toDouble(Object? v) => (v as num).toDouble();
+
 class Wallet {
   final String userId;
   final String contractAddress; // internal saja, JANGAN ditampilkan ke user
@@ -40,6 +48,20 @@ class AppTransaction {
     this.reference,
     this.note,
   });
+
+  /// From `GET /home/:userId/feed` (recentTransactions) / a transactions
+  /// endpoint. `amountIdr` is IDR; `status`/`direction` are lowercase enum names.
+  factory AppTransaction.fromJson(Map<String, dynamic> j) => AppTransaction(
+        id: j['id'] as String,
+        counterpartyName: j['counterpartyName'] as String,
+        amountIdr: _toDouble(j['amountIdr']),
+        createdAt: DateTime.parse(j['createdAt'] as String),
+        status: _enumByName(TxStatus.values, j['status'], TxStatus.pending),
+        direction:
+            _enumByName(TxDirection.values, j['direction'], TxDirection.send),
+        reference: j['reference'] as String?,
+        note: j['note'] as String?,
+      );
 }
 
 enum TxStatus { pending, settled, failed }
@@ -86,6 +108,19 @@ class Contact {
         isFavorite: isFavorite ?? this.isFavorite,
         lastSentAt: lastSentAt ?? this.lastSentAt,
       );
+
+  /// From `GET /contacts/:userId` and `POST /contacts`.
+  factory Contact.fromJson(Map<String, dynamic> j) => Contact(
+        id: j['id'] as String,
+        name: j['name'] as String,
+        relation: j['relation'] as String? ?? '',
+        initials: j['initials'] as String,
+        accountRef: j['accountRef'] as String? ?? '',
+        isFavorite: j['isFavorite'] as bool? ?? false,
+        lastSentAt: j['lastSentAt'] == null
+            ? null
+            : DateTime.parse(j['lastSentAt'] as String),
+      );
 }
 
 class PromoBanner {
@@ -106,6 +141,18 @@ class PromoBanner {
     this.badge,
     this.spotlight = SpotlightVariant.aurora,
   });
+
+  /// From the `promos` array of `GET /home/:userId/feed`.
+  factory PromoBanner.fromJson(Map<String, dynamic> j) => PromoBanner(
+        id: j['id'] as String,
+        title: j['title'] as String,
+        subtitle: j['subtitle'] as String,
+        ctaLabel: j['ctaLabel'] as String,
+        deepLink: j['deepLink'] as String,
+        badge: j['badge'] as String?,
+        spotlight: _enumByName(
+            SpotlightVariant.values, j['spotlight'], SpotlightVariant.aurora),
+      );
 }
 
 enum RequestStatus { pending, paid, declined, expired }
@@ -143,6 +190,17 @@ class MoneyRequest {
         status: status ?? this.status,
         createdAt: createdAt ?? this.createdAt,
       );
+
+  /// From `POST /requests`.
+  factory MoneyRequest.fromJson(Map<String, dynamic> j) => MoneyRequest(
+        id: j['id'] as String,
+        fromContactId: j['fromContactId'] as String,
+        amountIdr: _toDouble(j['amountIdr']),
+        note: j['note'] as String?,
+        status:
+            _enumByName(RequestStatus.values, j['status'], RequestStatus.pending),
+        createdAt: DateTime.parse(j['createdAt'] as String),
+      );
 }
 
 enum ParticipantStatus { pending, paid }
@@ -176,6 +234,25 @@ class SplitParticipant {
         isSelf: isSelf ?? this.isSelf,
         status: status ?? this.status,
       );
+
+  /// From the `participants` array of a `SplitBill`.
+  factory SplitParticipant.fromJson(Map<String, dynamic> j) => SplitParticipant(
+        contactId: j['contactId'] as String,
+        name: j['name'] as String,
+        shareIdr: _toDouble(j['shareIdr']),
+        isSelf: j['isSelf'] as bool? ?? false,
+        status: _enumByName(
+            ParticipantStatus.values, j['status'], ParticipantStatus.pending),
+      );
+
+  /// Sent in the `POST /splits` request body.
+  Map<String, dynamic> toJson() => {
+        'contactId': contactId,
+        'name': name,
+        'shareIdr': shareIdr,
+        'isSelf': isSelf,
+        'status': status.name,
+      };
 }
 
 class SplitBill {
@@ -201,6 +278,18 @@ class SplitBill {
   /// Apakah total pembagian pas dengan nominal tagihan.
   bool get isBalanced =>
       participants.fold(0.0, (sum, p) => sum + p.shareIdr) == totalIdr;
+
+  /// From `POST /splits` and `GET /splits/:id`. `collectedIdr`/`isBalanced` are
+  /// derived on-device from `participants` — the backend does not send them.
+  factory SplitBill.fromJson(Map<String, dynamic> j) => SplitBill(
+        id: j['id'] as String,
+        title: j['title'] as String,
+        totalIdr: _toDouble(j['totalIdr']),
+        createdAt: DateTime.parse(j['createdAt'] as String),
+        participants: (j['participants'] as List)
+            .map((e) => SplitParticipant.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
 }
 
 class HomeFeed {
@@ -219,6 +308,23 @@ class HomeFeed {
     required this.favoriteContacts,
     required this.recentTransactions,
   });
+
+  /// From `GET /home/:userId/feed`. `balanceIdr` is IDR (backend applies FX);
+  /// see mobile-ui-handoff-spec §6.1 / §7.2.
+  factory HomeFeed.fromJson(Map<String, dynamic> j) => HomeFeed(
+        balanceIdr: _toDouble(j['balanceIdr']),
+        greetingName: j['greetingName'] as String,
+        accountRef: j['accountRef'] as String,
+        promos: (j['promos'] as List? ?? const [])
+            .map((e) => PromoBanner.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        favoriteContacts: (j['favoriteContacts'] as List? ?? const [])
+            .map((e) => Contact.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        recentTransactions: (j['recentTransactions'] as List? ?? const [])
+            .map((e) => AppTransaction.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
 }
 
 /// Envelope attestation WebAuthn hasil `passkeys.register()` (registrasi).

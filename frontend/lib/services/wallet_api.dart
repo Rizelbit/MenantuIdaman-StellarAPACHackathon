@@ -104,59 +104,76 @@ class WalletApi {
     });
   }
 
-  /// Ambil feed Home (saldo, promo, kontak favorit, transaksi terbaru).
-  /// GET /home/:userId/feed
-  // TODO(handoff): see docs/backend_handoff.md
-  Future<Result<HomeFeed>> getHomeFeed(String userId) {
-    throw UnimplementedError();
-  }
+  /// Feed Home (saldo, promo, kontak favorit, transaksi terbaru).
+  /// GET /home/:userId/feed — nominal dalam IDR (lihat mobile-ui-handoff-spec §6.1).
+  Future<Result<HomeFeed>> getHomeFeed(String userId) => _guard(() async {
+        final r = await _dio.get('/home/$userId/feed');
+        return HomeFeed.fromJson(r.data as Map<String, dynamic>);
+      });
 
   /// Daftar kontak milik user.
-  /// GET /contacts/:userId
-  // TODO(handoff): see docs/backend_handoff.md
-  Future<Result<List<Contact>>> listContacts(String userId) {
-    throw UnimplementedError();
-  }
+  /// GET /contacts/:userId → `List<Contact>`
+  Future<Result<List<Contact>>> listContacts(String userId) => _guard(() async {
+        final r = await _dio.get('/contacts/$userId');
+        return (r.data as List)
+            .map((e) => Contact.fromJson(e as Map<String, dynamic>))
+            .toList();
+      });
 
   /// Tambah kontak baru.
-  /// POST /contacts  { name, relation, accountRef }
-  // TODO(handoff): see docs/backend_handoff.md
+  /// POST /contacts  { name, relation, accountRef } → Contact
   Future<Result<Contact>> addContact({
     required String name,
     required String relation,
     required String accountRef,
-  }) {
-    throw UnimplementedError();
-  }
+  }) =>
+      _guard(() async {
+        final r = await _dio.post('/contacts', data: {
+          'name': name,
+          'relation': relation,
+          'accountRef': accountRef,
+        });
+        return Contact.fromJson(r.data as Map<String, dynamic>);
+      });
 
   /// Buat permintaan uang (request) ke kontak.
-  /// POST /requests  { fromContactId, amountIdr, note }
-  // TODO(handoff): see docs/backend_handoff.md
+  /// POST /requests  { fromContactId, amountIdr, note } → MoneyRequest
   Future<Result<MoneyRequest>> createRequest({
     required String fromContactId,
     required double amountIdr,
     String? note,
-  }) {
-    throw UnimplementedError();
-  }
+  }) =>
+      _guard(() async {
+        final r = await _dio.post('/requests', data: {
+          'fromContactId': fromContactId,
+          'amountIdr': amountIdr,
+          'note': note,
+        });
+        return MoneyRequest.fromJson(r.data as Map<String, dynamic>);
+      });
 
   /// Buat tagihan split baru.
-  /// POST /splits  { title, totalIdr, participants }
-  // TODO(handoff): see docs/backend_handoff.md
+  /// POST /splits  { title, totalIdr, participants[] } → SplitBill
   Future<Result<SplitBill>> createSplit({
     required String title,
     required double totalIdr,
     required List<SplitParticipant> participants,
-  }) {
-    throw UnimplementedError();
-  }
+  }) =>
+      _guard(() async {
+        final r = await _dio.post('/splits', data: {
+          'title': title,
+          'totalIdr': totalIdr,
+          'participants': participants.map((p) => p.toJson()).toList(),
+        });
+        return SplitBill.fromJson(r.data as Map<String, dynamic>);
+      });
 
   /// Ambil detail tagihan split.
-  /// GET /splits/:id
-  // TODO(handoff): see docs/backend_handoff.md
-  Future<Result<SplitBill>> getSplit(String id) {
-    throw UnimplementedError();
-  }
+  /// GET /splits/:id → SplitBill
+  Future<Result<SplitBill>> getSplit(String id) => _guard(() async {
+        final r = await _dio.get('/splits/$id');
+        return SplitBill.fromJson(r.data as Map<String, dynamic>);
+      });
 
   /// Bungkus semua call: peta DioException → AppFailure ramah-user.
   Future<Result<T>> _guard<T>(Future<T> Function() run) async {
