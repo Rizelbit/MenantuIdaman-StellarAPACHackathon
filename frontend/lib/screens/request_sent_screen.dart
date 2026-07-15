@@ -35,9 +35,9 @@ class RequestSentScreen extends ConsumerWidget {
     }
 
     return AppScaffold(
-      title: 'Minta',
+      title: 'Request',
       bottom: PrimaryPillButton(
-        label: 'Selesai',
+        label: 'Done',
         onPressed: () => _done(context, ref),
       ),
       child: Column(
@@ -54,17 +54,17 @@ class RequestSentScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: KSpace.lg),
-          Text('Permintaan terkirim',
+          Text('Request sent',
               style: text.headlineMedium, textAlign: TextAlign.center),
           const SizedBox(height: KSpace.xs),
           Text(
-            'Kami akan ingatkan ${contact.name} untuk bayar '
+            'We\'ll ping ${contact.name} to pay '
             '${formatMoney(state.amountIdr, Currency.idr)}',
             style: text.bodyMedium?.copyWith(color: p.inkMuted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: KSpace.xl),
-          const Center(child: StatusChip.info('Menunggu dibayar')),
+          const Center(child: StatusChip.info('Waiting to be paid')),
           const SizedBox(height: KSpace.lg),
           SurfaceCard(
             child: Column(
@@ -72,15 +72,15 @@ class RequestSentScreen extends ConsumerWidget {
               children: [
                 const _TimelineStep(
                   filled: true,
-                  label: 'Permintaan terkirim · Baru saja',
+                  label: 'Request sent · Just now',
                 ),
                 const SizedBox(height: KSpace.sm),
                 const _TimelineStep(
                   filled: false,
-                  label: 'Menunggu dibayar',
+                  label: 'Waiting to be paid',
                 ),
                 const SizedBox(height: KSpace.sm),
-                Text('Kami kabari begitu ${contact.name} bayar',
+                Text('We\'ll let you know once ${contact.name} pays',
                     style: text.bodySmall?.copyWith(color: p.inkMuted)),
               ],
             ),

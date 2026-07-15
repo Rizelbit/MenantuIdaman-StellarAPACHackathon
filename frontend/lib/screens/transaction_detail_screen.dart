@@ -11,8 +11,8 @@ import '../state/send_controller.dart';
 import '../theme/tokens.dart';
 import '../widgets/widgets.dart';
 
-/// Cari elemen list berdasarkan id — pengganti ringan untuk lookup satuan
-/// pada data [HomeFeed] yang sudah termuat (tanpa `package:collection`).
+/// Find a list element by id — a light single lookup on already-loaded
+/// [HomeFeed] data (no `package:collection`).
 T? _firstById<T>(List<T> list, String id, String Function(T) idOf) {
   for (final e in list) {
     if (idOf(e) == id) return e;
@@ -20,10 +20,10 @@ T? _firstById<T>(List<T> list, String id, String Function(T) idOf) {
   return null;
 }
 
-/// Detail satu transaksi, dibuka dari Home/History lewat `/tx/:id`. Datanya
-/// diambil dari [homeFeedProvider] yang sudah termuat (bukan fetch terpisah)
-/// — kalau feed belum siap (deep-link dingin) atau id tidak ketemu, tampil
-/// state tidak ditemukan alih-alih layar kosong.
+/// One transaction's detail, opened from Home/History via `/tx/:id`. Data comes
+/// from the already-loaded [homeFeedProvider] (not a separate fetch) — if the
+/// feed isn't ready (cold deep-link) or the id is missing, a not-found state
+/// shows instead of a blank screen.
 class TransactionDetailScreen extends ConsumerWidget {
   final String id;
   const TransactionDetailScreen({required this.id, super.key});
@@ -36,22 +36,22 @@ class TransactionDetailScreen extends ConsumerWidget {
 
     if (tx == null) {
       return const AppScaffold(
-        title: 'Transaksi',
+        title: 'Transaction',
         child: EmptyView(
           icon: Icons.error_outline,
-          title: 'Transaksi tidak ditemukan',
-          subtitle: 'Coba buka dari daftar riwayat.',
+          title: 'Transaction not found',
+          subtitle: 'Try opening it from your history.',
         ),
       );
     }
 
     return AppScaffold(
-      title: 'Transaksi',
+      title: 'Transaction',
       bottom: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           PrimaryPillButton(
-            label: 'Kirim lagi',
+            label: 'Send again',
             onPressed: () {
               final n = ref.read(sendControllerProvider.notifier);
               n.reset();
@@ -61,9 +61,9 @@ class TransactionDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: KSpace.sm),
           SecondaryPillButton(
-            label: 'Bagikan bukti',
+            label: 'Share receipt',
             onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Bukti disalin')),
+              const SnackBar(content: Text('Receipt copied')),
             ),
           ),
         ],
@@ -93,7 +93,7 @@ class _TransactionDetailBody extends StatelessWidget {
   }
 }
 
-/// Avatar (atau lingkaran ikon split) + nominal bertanda besar di tengah.
+/// Avatar (or split icon circle) + big signed amount, centered.
 class _AmountHeader extends StatelessWidget {
   final AppTransaction tx;
   const _AmountHeader({required this.tx});
@@ -133,80 +133,42 @@ StatusChip _statusChipFor(AppTransaction tx) {
   switch (tx.status) {
     case TxStatus.settled:
       final label = tx.direction == TxDirection.receive
-          ? 'Diterima'
+          ? 'Received'
           : tx.direction == TxDirection.split
               ? 'Split'
-              : 'Terkirim';
+              : 'Sent';
       return StatusChip.success(label);
     case TxStatus.pending:
-      return const StatusChip.info('Menunggu');
+      return const StatusChip.info('Pending');
     case TxStatus.failed:
-      return const StatusChip.danger('Gagal');
+      return const StatusChip.danger('Failed');
   }
 }
 
-/// Kartu rincian: lawan transaksi, tanggal, biaya, referensi, dan catatan
-/// (kalau ada) — label inkMuted di kiri, nilai ink di kanan.
+/// Detail rows in a surface card with a hairline divider between each — counter-
+/// party, date, fee, reference, and note (when present).
 class _DetailRows extends StatelessWidget {
   final AppTransaction tx;
   const _DetailRows({required this.tx});
 
   @override
   Widget build(BuildContext context) {
+    final p = KColors.of(Theme.of(context).brightness);
     final isReceive = tx.direction == TxDirection.receive;
 
-    return SurfaceCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _DetailRow(label: isReceive ? 'Dari' : 'Ke', value: tx.counterpartyName),
-          const SizedBox(height: KSpace.sm),
-          _DetailRow(
-            label: 'Tanggal',
-            value: DateFormat('d MMM yyyy · HH:mm', 'id').format(tx.createdAt),
-          ),
-          const SizedBox(height: KSpace.sm),
-          const _DetailRow(label: 'Biaya', value: 'Rp 0'),
-          const SizedBox(height: KSpace.sm),
-          _DetailRow(label: 'Referensi', value: tx.reference ?? 'KRM-8F2A091'),
-          if (tx.note != null) ...[
-            const SizedBox(height: KSpace.sm),
-            _DetailRow(label: 'Catatan', value: tx.note!),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _DetailRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final p = KColors.of(Theme.of(context).brightness);
-    final text = Theme.of(context).textTheme;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: text.bodyMedium?.copyWith(color: p.inkMuted)),
-        const SizedBox(width: KSpace.md),
-        Expanded(
-          child: Text(
-            value,
-            style: text.bodyMedium?.copyWith(color: p.ink),
-            textAlign: TextAlign.right,
-          ),
-        ),
+    return InfoRowsCard(
+      rows: [
+        InfoRow(isReceive ? 'From' : 'To', tx.counterpartyName),
+        InfoRow('Date', DateFormat('d MMM yyyy · HH:mm').format(tx.createdAt)),
+        InfoRow('Fee', 'Rp 0', valueColor: p.success),
+        InfoRow('Reference', tx.reference ?? 'KRM-8F2A091', valueMonospace: true),
+        if (tx.note != null) InfoRow('Note', tx.note!),
       ],
     );
   }
 }
 
-/// Dua huruf pertama nama, huruf besar — inisial avatar lawan transaksi.
+/// First two letters of the name, uppercase — counterparty avatar initials.
 String _initialsOf(String name) {
   final trimmed = name.trim();
   if (trimmed.isEmpty) return '?';

@@ -37,12 +37,12 @@ class SendSuccessScreen extends ConsumerWidget {
       bottom: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          PrimaryPillButton(label: 'Selesai', onPressed: done),
+          PrimaryPillButton(label: 'Done', onPressed: done),
           const SizedBox(height: KSpace.sm),
           SecondaryPillButton(
-            label: 'Bagikan bukti',
+            label: 'Share receipt',
             onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Bukti kiriman disalin.')),
+              const SnackBar(content: Text('Receipt copied.')),
             ),
           ),
         ],
@@ -53,43 +53,23 @@ class SendSuccessScreen extends ConsumerWidget {
           const Spacer(),
           Center(child: Icon(Icons.check_circle, size: 88, color: p.success)),
           const SizedBox(height: KSpace.lg),
-          Text('Uang sedang dikirim',
+          Text('Money\'s on its way',
               style: text.headlineMedium, textAlign: TextAlign.center),
           const SizedBox(height: KSpace.xs),
           Text(
-            '${formatMoney(result.amountIdr, Currency.idr)} sedang menuju '
+            '${formatMoney(result.amountIdr, Currency.idr)} is heading to '
             '${result.counterpartyName}',
             style: text.bodyMedium?.copyWith(color: p.inkMuted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: KSpace.xl),
-          SurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Ke ${result.counterpartyName}', style: text.bodyLarge),
-                const SizedBox(height: KSpace.sm),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Nominal',
-                        style: text.bodyMedium?.copyWith(color: p.inkMuted)),
-                    Text(formatMoney(result.amountIdr, Currency.idr),
-                        style: text.bodyMedium),
-                  ],
-                ),
-                const SizedBox(height: KSpace.xs),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Referensi',
-                        style: text.bodyMedium?.copyWith(color: p.inkMuted)),
-                    Text(result.reference ?? 'KRM-8F2A091',
-                        style: text.bodyMedium),
-                  ],
-                ),
-              ],
-            ),
+          InfoRowsCard(
+            rows: [
+              InfoRow('To', result.counterpartyName),
+              InfoRow('Amount', formatMoney(result.amountIdr, Currency.idr)),
+              InfoRow('Reference', result.reference ?? 'KRM-8F2A091',
+                  valueMonospace: true),
+            ],
           ),
           const Spacer(flex: 2),
         ],
