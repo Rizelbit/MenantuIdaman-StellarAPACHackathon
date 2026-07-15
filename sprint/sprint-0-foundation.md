@@ -6,16 +6,16 @@ Menyiapkan seluruh infrastruktur agar sprint berikutnya bisa langsung fokus ke k
 
 ## Definition of Done
 
-- [ ] Backend ter-deploy di Railway.app dengan URL HTTPS stabil (RP_ID sudah di-lock)
-- [ ] `GET /health` dapat diakses publik dan mengembalikan `{"ok":true}`
-- [ ] `GET /.well-known/apple-app-site-association` → HTTP 200, JSON valid
-- [ ] `GET /.well-known/assetlinks.json` → HTTP 200, JSON valid
+- [x] Backend ter-deploy di Railway.app dengan URL HTTPS stabil (RP_ID sudah di-lock)
+- [x] `GET /health` dapat diakses publik dan mengembalikan `{"ok":true}`
+- [ ] `GET /.well-known/apple-app-site-association` → HTTP 200, JSON valid — 200 OK, tapi Content-Type salah (`application/octet-stream`) dan Team ID masih placeholder
+- [x] `GET /.well-known/assetlinks.json` → HTTP 200, JSON valid
 - [ ] iOS: Associated Domains entitlement terpasang di Xcode
-- [ ] Android: Asset Links terkonfigurasi di manifest
-- [ ] Stellar CLI terinstall + keypair deployer tersimpan aman
-- [ ] Passkey Kit factory contract ter-deploy di testnet → `FACTORY_CONTRACT_ID` tercatat
-- [ ] Launchtube testnet token tersedia → `LAUNCHTUBE_TOKEN` tercatat
-- [ ] Demo wallet (pengirim) terfund USDC/test-USD via testnet
+- [ ] Android: Asset Links terkonfigurasi di manifest — file sudah dikonfigurasi (manifest + strings.xml), tinggal verifikasi build & `adb logcat` di device fisik
+- [x] Stellar CLI terinstall + keypair deployer tersimpan aman
+- [ ] Passkey Kit factory contract ter-deploy di testnet → `FACTORY_CONTRACT_ID` tercatat — arsitektur berubah ke passkey-kit v1 (no factory), lihat S0-10
+- [x] ~~Launchtube testnet token tersedia~~ — **SKIPPED**, lihat S0-11. Deployer secret key tersedia untuk backend relayer (fee sponsorship langsung via Soroban RPC)
+- [x] Demo wallet (pengirim) terfund USDC/test-USD via testnet
 - [ ] Flutter boot di device fisik → splash screen muncul, tidak crash
 
 ---
@@ -24,26 +24,26 @@ Menyiapkan seluruh infrastruktur agar sprint berikutnya bisa langsung fokus ke k
 
 | ID | Judul | Status | Prioritas |
 |----|-------|--------|-----------|
-| [S0-01](#s0-01--deploy-backend-ke-railwayapp) | Deploy backend ke Railway.app | `TODO` | P0 |
-| [S0-02](#s0-02--konfigurasi-environment-variables-di-railway) | Konfigurasi env vars di Railway | `TODO` | P0 |
-| [S0-03](#s0-03--lock-rp_id-dan-dokumentasikan-domain) | Lock RP_ID dan dokumentasikan domain | `TODO` | P0 |
-| [S0-04](#s0-04--buat-apple-app-site-association) | Buat `apple-app-site-association` | `TODO` | P0 |
-| [S0-05](#s0-05--buat-assetlinksjson) | Buat `assetlinks.json` | `TODO` | P0 |
-| [S0-06](#s0-06--verifikasi-well-known-endpoint-via-https) | Verifikasi `.well-known` endpoint | `TODO` | P0 |
+| [S0-01](#s0-01--deploy-backend-ke-railwayapp) | Deploy backend ke Railway.app | `FINISHED` | P0 |
+| [S0-02](#s0-02--konfigurasi-environment-variables-di-railway) | Konfigurasi env vars di Railway | `ON GOING` | P0 |
+| [S0-03](#s0-03--lock-rp_id-dan-dokumentasikan-domain) | Lock RP_ID dan dokumentasikan domain | `FINISHED` | P0 |
+| [S0-04](#s0-04--buat-apple-app-site-association) | Buat `apple-app-site-association` | `ON GOING` | P0 |
+| [S0-05](#s0-05--buat-assetlinksjson) | Buat `assetlinks.json` | `FINISHED` | P0 |
+| [S0-06](#s0-06--verifikasi-well-known-endpoint-via-https) | Verifikasi `.well-known` endpoint | `ON GOING` | P0 |
 | [S0-07](#s0-07--setup-ios-associated-domains-di-xcode) | Setup iOS Associated Domains di Xcode | `TODO` | P0 |
-| [S0-08](#s0-08--setup-android-digital-asset-links) | Setup Android Digital Asset Links | `TODO` | P0 |
-| [S0-09](#s0-09--install-stellar-cli--generate-keypair-deployer) | Install Stellar CLI + generate keypair | `TODO` | P0 |
-| [S0-10](#s0-10--deploy-passkey-kit-factory-contract-ke-testnet) | Deploy Passkey Kit factory ke testnet | `TODO` | P0 |
-| [S0-11](#s0-11--dapatkan-launchtube-testnet-token) | Dapatkan Launchtube testnet token | `TODO` | P0 |
-| [S0-12](#s0-12--setup-demo-wallet-dan-fund-usdc-testnet) | Setup demo wallet + fund USDC testnet | `TODO` | P1 |
-| [S0-13](#s0-13--konfigurasi-flutter-dart-define) | Konfigurasi Flutter `--dart-define` | `TODO` | P0 |
-| [S0-14](#s0-14--smoke-test-flutter-di-device-fisik) | Smoke test Flutter di device fisik | `TODO` | P0 |
+| [S0-08](#s0-08--setup-android-digital-asset-links) | Setup Android Digital Asset Links | `ON GOING` | P0 |
+| [S0-09](#s0-09--install-stellar-cli--generate-keypair-deployer) | Install Stellar CLI + generate keypair | `ON GOING` | P0 |
+| [S0-10](#s0-10--deploy-passkey-kit-factory-contract-ke-testnet) | Deploy Passkey Kit factory ke testnet | `ON GOING` | P0 |
+| [S0-11](#s0-11--dapatkan-launchtube-testnet-token) | ~~Dapatkan Launchtube testnet token~~ | `SKIPPED` | ~~P0~~ |
+| [S0-12](#s0-12--setup-demo-wallet-dan-fund-usdc-testnet) | Setup demo wallet + fund USDC testnet | `FINISHED` | P1 |
+| [S0-13](#s0-13--konfigurasi-flutter-dart-define) | Konfigurasi Flutter `--dart-define` | `ON GOING` | P0 |
+| [S0-14](#s0-14--smoke-test-flutter-di-device-fisik) | Smoke test Flutter di device fisik | `ON GOING` | P0 |
 
 ---
 
 ## S0-01 — Deploy backend ke Railway.app
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** setup
+**Status:** `FINISHED` | **Prioritas:** P0 | **Tipe:** setup
 
 **Konteks:**  
 Backend harus di-host di URL HTTPS yang stabil sejak awal karena RP_ID (domain passkey) **tidak boleh berubah** setelah passkey pertama dibuat. Railway.app dipilih karena gratis ($5 kredit/bulan), mendukung deploy langsung dari Dockerfile, dan menghasilkan domain HTTPS stabil tanpa konfigurasi tambahan.
@@ -61,8 +61,8 @@ Backend harus di-host di URL HTTPS yang stabil sejak awal karena RP_ID (domain p
 Tidak ada perubahan kode — Railway deploy dari repo as-is.
 
 **Acceptance criteria:**
-- [ ] `curl https://<railway-url>/health` mengembalikan `{"ok":true,"service":"kirimin-backend"}`
-- [ ] URL bisa diakses dari browser/HP tanpa error SSL
+- [x] `curl https://<railway-url>/health` mengembalikan `{"ok":true,"service":"kirimin-backend"}`
+- [x] URL bisa diakses dari browser/HP tanpa error SSL
 
 **Catatan risiko:**  
 Bila Railway timeout build, cek apakah `backend/package-lock.json` sudah ada (CI butuh ini untuk `npm ci`). Jalankan `cd backend && npm install` lalu commit `package-lock.json`.
@@ -71,7 +71,7 @@ Bila Railway timeout build, cek apakah `backend/package-lock.json` sudah ada (CI
 
 ## S0-02 — Konfigurasi environment variables di Railway
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** setup
+**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** setup
 
 **Konteks:**  
 Semua nilai sensitif masuk via env vars, bukan hardcode. Ini dikonfigurasi di Railway dashboard, bukan di file `.env` yang di-commit.
@@ -102,14 +102,14 @@ SIGNER_SECRET_KEY=PLACEHOLDER
 - `backend/.env.example` — update jika ada field baru yang perlu didokumentasikan
 
 **Acceptance criteria:**
-- [ ] Railway dashboard menampilkan semua variabel di atas tanpa error
-- [ ] `curl https://<railway-url>/health` tetap mengembalikan `200 OK` setelah redeploy
+- [ ] Railway dashboard menampilkan semua variabel di atas tanpa error — belum terverifikasi; `FACTORY_CONTRACT_ID` masih placeholder di `.env.example`
+- [x] `curl https://<railway-url>/health` tetap mengembalikan `200 OK` setelah redeploy
 
 ---
 
 ## S0-03 — Lock RP_ID dan dokumentasikan domain
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** setup
+**Status:** `FINISHED` | **Prioritas:** P0 | **Tipe:** setup
 
 **Konteks:**  
 RP_ID adalah domain yang meng-host `.well-known/` dan yang tercatat di passkey device. **Setelah passkey pertama dibuat dengan RP_ID tertentu, domain tidak boleh berubah** — passkey lama tidak bisa dipakai lagi di domain baru. Lock ini sejak awal dan dokumentasikan di satu tempat terpusat.
@@ -149,15 +149,15 @@ flutter run \
 ```
 
 **Acceptance criteria:**
-- [ ] `sprint/CONFIG.md` ada dan berisi RP_ID yang benar
-- [ ] `sprint/SECRETS.md` ada dan di-gitignore
-- [ ] Seluruh tim tahu domain yang dipakai
+- [x] `sprint/CONFIG.md` ada dan berisi RP_ID yang benar
+- [x] `sprint/SECRETS.md` ada dan di-gitignore
+- [x] Seluruh tim tahu domain yang dipakai
 
 ---
 
 ## S0-04 — Buat `apple-app-site-association`
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** setup
+**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** setup
 
 **Konteks:**  
 iOS membutuhkan file ini di `https://<RP_ID>/.well-known/apple-app-site-association` (tanpa ekstensi `.json`) agar Associated Domains berfungsi dan passkey biometrik muncul. File sudah di-serve oleh backend via `express.static`.
@@ -184,10 +184,10 @@ Contoh: `"ABCDE12345.com.kirimin.app"`
 - `backend/public/.well-known/apple-app-site-association` (baru)
 
 **Acceptance criteria:**
-- [ ] File ada di path yang benar (tanpa `.json` extension)
-- [ ] Setelah deploy Railway: `curl -v https://<railway-url>/.well-known/apple-app-site-association` → HTTP 200, `Content-Type: application/json`
-- [ ] JSON valid (test di [jsonlint.com](https://jsonlint.com))
-- [ ] Team ID dan Bundle ID sudah benar
+- [x] File ada di path yang benar (tanpa `.json` extension)
+- [ ] Setelah deploy Railway: `curl -v https://<railway-url>/.well-known/apple-app-site-association` → HTTP 200, `Content-Type: application/json` — 200 OK tapi Content-Type masih `application/octet-stream`
+- [x] JSON valid (test di [jsonlint.com](https://jsonlint.com))
+- [ ] Team ID dan Bundle ID sudah benar — masih `TEAM_ID_NANTI_DIISI` dan `com.example.kirimin` (default Flutter)
 
 **Catatan risiko:**  
 Bundle ID di file ini harus **identik persis** dengan Bundle ID di Xcode. Satu huruf beda = passkey tidak muncul tanpa pesan error jelas.
@@ -196,7 +196,7 @@ Bundle ID di file ini harus **identik persis** dengan Bundle ID di Xcode. Satu h
 
 ## S0-05 — Buat `assetlinks.json`
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** setup
+**Status:** `FINISHED` | **Prioritas:** P0 | **Tipe:** setup
 
 **Konteks:**  
 Android membutuhkan file ini di `https://<RP_ID>/.well-known/assetlinks.json` untuk Digital Asset Links. Berisi SHA-256 fingerprint dari signing key aplikasi.
@@ -240,10 +240,10 @@ Android membutuhkan file ini di `https://<RP_ID>/.well-known/assetlinks.json` un
 - `backend/public/.well-known/assetlinks.json` (baru)
 
 **Acceptance criteria:**
-- [ ] File ada dan JSON valid
-- [ ] Setelah deploy Railway: `curl https://<railway-url>/.well-known/assetlinks.json` → HTTP 200
-- [ ] SHA-256 fingerprint sesuai dengan debug keystore
-- [ ] Package name sesuai dengan `applicationId` di `build.gradle`
+- [x] File ada dan JSON valid
+- [x] Setelah deploy Railway: `curl https://<railway-url>/.well-known/assetlinks.json` → HTTP 200
+- [x] SHA-256 fingerprint sesuai dengan debug keystore
+- [x] Package name sesuai dengan `applicationId` di `build.gradle`
 
 **Catatan risiko:**  
 Fingerprint release dan debug berbeda. Untuk demo, gunakan debug fingerprint + install via `flutter run`. Jika demo via APK yang di-sign release, tambahkan fingerprint release ke array.
@@ -252,7 +252,7 @@ Fingerprint release dan debug berbeda. Untuk demo, gunakan debug fingerprint + i
 
 ## S0-06 — Verifikasi `.well-known` endpoint via HTTPS
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** chore  
+**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** chore  
 **Dependencies:** S0-01, S0-04, S0-05
 
 **Konteks:**  
@@ -277,10 +277,10 @@ curl -v https://<railway-url>/.well-known/assetlinks.json
 3. Untuk iOS: gunakan [Branch AASA Validator](https://branch.io/resources/aasa-validator/) — masukkan domain Railway.
 
 **Acceptance criteria:**
-- [ ] Semua 3 endpoint mengembalikan HTTP 200
-- [ ] `Content-Type` adalah `application/json`
-- [ ] iOS AASA validator: VALID
-- [ ] Android Digital Asset Links tester: VALID
+- [x] Semua 3 endpoint mengembalikan HTTP 200
+- [ ] `Content-Type` adalah `application/json` — AASA masih `application/octet-stream`
+- [ ] iOS AASA validator: VALID — belum dijalankan
+- [ ] Android Digital Asset Links tester: VALID — belum dijalankan
 
 ---
 
@@ -320,8 +320,20 @@ Bila menggunakan free Apple Developer account (Personal Team), Associated Domain
 
 ## S0-08 — Setup Android Digital Asset Links
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** setup  
+**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** setup  
 **Dependencies:** S0-03, S0-05, S0-06
+
+**Update (2026-07-15):**  
+Package name resmi diputuskan: **`com.kirimin.app`** (ganti dari default `com.example.kirimin`). Sudah dieksekusi:
+- `applicationId` & `namespace` di `build.gradle.kts` → `com.kirimin.app`
+- Kotlin package `MainActivity.kt` dipindah ke `frontend/android/app/src/main/kotlin/com/kirimin/app/`
+- `backend/public/.well-known/assetlinks.json` → `package_name` diupdate ke `com.kirimin.app` (perlu di-push ke Railway agar live)
+- `sprint/CONFIG.md` → Application ID diupdate
+- `frontend/android/app/src/main/res/values/strings.xml` dibuat dengan `asset_statements` menunjuk ke `assetlinks.json` live
+- `AndroidManifest.xml` sudah ditambah `<meta-data android:name="asset_statements">` di dalam `<activity>`
+- JSON & XML tervalidasi well-formed
+
+**Belum bisa dieksekusi dari sini** (butuh Flutter SDK + device fisik, tidak tersedia di environment ini): `flutter pub get` untuk cek auto-config plugin `passkeys`, build & run ke device Android, serta `adb logcat` verification. Ini jadi PR berikutnya untuk yang punya akses ke device.
 
 **Konteks:**  
 Android Credential Manager (yang dipakai package `passkeys`) memverifikasi Digital Asset Links sebelum menampilkan passkey UI. Konfigurasi ini ada di dua tempat: server (sudah via S0-05) dan manifest Android.
@@ -350,9 +362,9 @@ Android Credential Manager (yang dipakai package `passkeys`) memverifikasi Digit
 - `frontend/android/app/src/main/res/values/strings.xml` (buat bila belum ada)
 
 **Acceptance criteria:**
-- [ ] Build Android berhasil
-- [ ] Install di device fisik: tidak crash
-- [ ] `adb logcat` tidak menampilkan Digital Asset Links error
+- [ ] Build Android berhasil — belum dicoba (perlu Flutter SDK di device build)
+- [ ] Install di device fisik: tidak crash — belum dicoba
+- [ ] `adb logcat` tidak menampilkan Digital Asset Links error — belum dicoba
 
 **Catatan risiko:**  
 Package `passkeys` versi 2.x mungkin sudah handle sebagian konfigurasi Android secara otomatis. Cek dokumentasi package setelah `flutter pub get` untuk memastikan tidak ada setup manual tambahan.
@@ -361,7 +373,7 @@ Package `passkeys` versi 2.x mungkin sudah handle sebagian konfigurasi Android s
 
 ## S0-09 — Install Stellar CLI + generate keypair deployer
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** setup
+**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** setup
 
 **Konteks:**  
 Stellar CLI dibutuhkan untuk deploy factory contract dan operasi testnet. Keypair deployer adalah akun yang dipakai untuk sign deploy transaction (bukan akun pengguna).
@@ -404,18 +416,21 @@ Stellar CLI dibutuhkan untuk deploy factory contract dan operasi testnet. Keypai
 - `sprint/SECRETS.md` — tambah SIGNER_SECRET_KEY (tidak di-commit)
 
 **Acceptance criteria:**
-- [ ] `stellar --version` mengembalikan versi >= 21.0
-- [ ] `stellar account info deployer --network testnet` menampilkan account dengan XLM balance
-- [ ] Secret key tersimpan aman di SECRETS.md (tidak di-commit)
+- [x] `stellar --version` mengembalikan versi >= 21.0 — tercatat `27.0.0` di `sprint/CONFIG.md`
+- [ ] `stellar account info deployer --network testnet` menampilkan account dengan XLM balance — belum terverifikasi/tercatat
+- [x] Secret key tersimpan aman di SECRETS.md (tidak di-commit)
 
 ---
 
 ## S0-10 — Deploy Passkey Kit factory contract ke testnet
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** setup  
+**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** setup  
 **Dependencies:** S0-09
 
-**Konteks:**  
+**Catatan kondisi terakhir:**  
+Passkey Kit yang dipakai tim ternyata versi **v1** (`passkey-kit@^0.14.0`), yang **tidak memakai arsitektur factory contract** lagi — sebagai gantinya, wallet WASM di-upload langsung ke testnet dan di-deploy per-user dari deployer kanonis. `sprint/CONFIG.md` sudah mencatat **Wallet WASM Hash** dan **Canonical Deployer**, tapi `FACTORY_CONTRACT_ID` (sesuai definisi issue ini) tidak akan pernah terisi. `backend/.env.example` dan `contracts/README.md` masih menyebut pola factory — perlu disinkronkan ke arsitektur v1 di iterasi berikutnya.
+
+**Konteks (asli, untuk referensi):**  
 Factory contract adalah smart contract Soroban yang men-deploy smart wallet baru untuk tiap user. Kita **tidak menulis contract dari nol** — kita deploy contract dari Passkey Kit.
 
 **Langkah (cek existing factory dulu):**
@@ -454,45 +469,43 @@ Factory contract adalah smart contract Soroban yang men-deploy smart wallet baru
 - `backend/.env.example` — pastikan `FACTORY_CONTRACT_ID` ada sebagai field
 
 **Acceptance criteria:**
-- [ ] Factory Contract ID tersedia (dari existing deploy atau deploy sendiri)
-- [ ] `stellar contract invoke --id <FACTORY_CONTRACT_ID> --network testnet -- --help` tidak error
-- [ ] Railway env var `FACTORY_CONTRACT_ID` sudah terisi
+- [ ] Factory Contract ID tersedia (dari existing deploy atau deploy sendiri) — N/A, v1 tidak pakai factory (lihat catatan di atas)
+- [ ] `stellar contract invoke --id <FACTORY_CONTRACT_ID> --network testnet -- --help` tidak error — N/A
+- [ ] Railway env var `FACTORY_CONTRACT_ID` sudah terisi — masih `PLACEHOLDER`
 
 **Catatan risiko:**  
 Bila deploy sendiri, pastikan versi Stellar CLI yang dipakai kompatibel dengan contract Rust di passkey-kit. Pin versi CLI dan catat di `sprint/CONFIG.md`.
 
 ---
 
-## S0-11 — Dapatkan Launchtube testnet token
+## S0-11 — ~~Dapatkan Launchtube testnet token~~ (SKIPPED)
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** setup
+**Status:** `SKIPPED` | **Prioritas:** ~~P0~~ | **Tipe:** setup
 
-**Konteks:**  
-Launchtube menangani fee & sequence number untuk transaksi Soroban. Tanpa token ini, kita harus memastikan user punya XLM untuk gas — yang bertentangan dengan north star "no gas". Token testnet bisa didapat gratis.
+**Keputusan (2026-07-15):**  
+Issue ini **di-skip**, bukan dikerjakan. Alasan:
 
-**Langkah:**
-1. Join Discord Stellar: [discord.gg/stellar](https://discord.gg/stellar)
-2. Pergi ke channel `#launchtube`
-3. Request testnet token (biasanya self-service via bot atau tanya di channel)
-4. Alternatif: cek [launchtube.xyz](https://launchtube.xyz) untuk self-service testnet token
-5. Setelah dapat token:
-   - Railway dashboard: set `LAUNCHTUBE_TOKEN=<token>`
-   - `LAUNCHTUBE_URL=https://launchtube.xyz` (atau URL yang diberikan)
-   - `sprint/SECRETS.md`: simpan token
+1. **Launchtube sudah deprecated.** Repo resmi [`stellar/launchtube`](https://github.com/stellar/launchtube) sudah *archived* (per 2026-03-09), berstatus legacy, dan README-nya eksplisit bilang *"this service should not be used for new projects"* — diarahkan migrasi ke **OpenZeppelin Relayer + Channels Plugin**.
+2. **S0-10 tidak pernah butuh Launchtube** — deploy factory/contract dilakukan via `stellar contract deploy --source deployer --network testnet` (CLI langsung), bukan lewat Launchtube.
+3. **Fee sponsorship tetap tercapai tanpa Launchtube.** Backend bisa jadi "relayer" sendiri: pegang `SIGNER_SECRET_KEY` deployer, submit transaksi langsung ke Soroban RPC, bayar fee dari XLM deployer. User tetap tidak butuh XLM (north star "no gas" tetap terjaga dari sisi UX). Ini sudah didokumentasikan di `sprint/CONFIG.md` § Fee Sponsorship, dan `SIGNER_SECRET_KEY` sudah tersedia di `sprint/SECRETS.md`.
+4. Upgrade ke **OpenZeppelin Channels** (sesuai rekomendasi migrasi resmi Stellar) tetap jadi opsi upgrade produksi nanti, bukan kebutuhan MVP/testnet.
+
+**Konteks asli (untuk referensi historis):**  
+~~Launchtube menangani fee & sequence number untuk transaksi Soroban. Tanpa token ini, kita harus memastikan user punya XLM untuk gas — yang bertentangan dengan north star "no gas". Token testnet bisa didapat gratis.~~
 
 **File yang diubah/dibuat:**
-- `sprint/SECRETS.md` — tambah LAUNCHTUBE_TOKEN
+- `sprint/SECRETS.md` — `SIGNER_SECRET_KEY` (deployer) sudah terisi, dipakai backend relayer sebagai pengganti Launchtube
+- `backend/.env.example` — `LAUNCHTUBE_URL`/`LAUNCHTUBE_TOKEN` ditandai opsional (lihat catatan di file)
 
-**Acceptance criteria:**
-- [ ] Launchtube token tersedia
-- [ ] Railway env var `LAUNCHTUBE_TOKEN` dan `LAUNCHTUBE_URL` sudah terisi
-- [ ] Token di-test: bisa submit 1 dummy tx ke testnet via Launchtube (boleh gagal karena payload — yang penting tidak auth error)
+**Acceptance criteria (revisi):**
+- [x] Deployer secret key tersedia di `sprint/SECRETS.md` untuk backend relayer
+- [ ] (Sprint 1) Endpoint `tx/submit` di backend mengirim transaksi langsung ke Soroban RPC menggunakan deployer's XLM sebagai fee sponsor
 
 ---
 
 ## S0-12 — Setup demo wallet dan fund USDC testnet
 
-**Status:** `TODO` | **Prioritas:** P1 | **Tipe:** setup  
+**Status:** `FINISHED` | **Prioritas:** P1 | **Tipe:** setup  
 **Dependencies:** S0-09
 
 **Konteks:**  
@@ -528,15 +541,15 @@ Untuk demo, kita perlu 2 akun testnet: pengirim (sender) dan penerima (receiver)
 - `sprint/CONFIG.md` — tambah Demo Sender & Receiver address
 
 **Acceptance criteria:**
-- [ ] Kedua akun terfund XLM (cek di Stellar Expert testnet)
-- [ ] Kedua akun punya USDC trustline aktif
-- [ ] Sender punya USDC balance > 0
+- [x] Kedua akun terfund XLM (cek di Stellar Expert testnet)
+- [x] Kedua akun punya USDC trustline aktif
+- [x] Sender punya USDC balance > 0
 
 ---
 
 ## S0-13 — Konfigurasi Flutter `--dart-define`
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** setup  
+**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** setup  
 **Dependencies:** S0-03
 
 **Konteks:**  
@@ -585,14 +598,14 @@ Flutter butuh `BACKEND_URL` dan `RP_ID` saat build/run. Ini di-pass via `--dart-
 - `.vscode/launch.json` (baru atau update)
 
 **Acceptance criteria:**
-- [ ] `./frontend/run-dev.sh` menjalankan Flutter dengan nilai yang benar
-- [ ] `Env.backendUrl` dan `Env.rpId` di app terisi dengan nilai Railway (verify via debugger atau print sementara)
+- [x] `./frontend/run-dev.sh` menjalankan Flutter dengan nilai yang benar — file ada, RP_ID & BACKEND_URL sesuai `CONFIG.md`; `.vscode/launch.json` belum dibuat
+- [ ] `Env.backendUrl` dan `Env.rpId` di app terisi dengan nilai Railway (verify via debugger atau print sementara) — belum diverifikasi runtime
 
 ---
 
 ## S0-14 — Smoke test Flutter di device fisik
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** chore  
+**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** chore  
 **Dependencies:** S0-07, S0-08, S0-13
 
 **Konteks:**  
@@ -608,9 +621,9 @@ Sebelum mulai Sprint 1, verifikasi bahwa app sudah boot dengan benar di device f
    - Tidak ada crash / unhandled exception di console
 
 **Acceptance criteria:**
-- [ ] iOS: app boot → splash → onboarding, tidak crash
-- [ ] Android: app boot → splash → onboarding, tidak crash
-- [ ] `flutter analyze` di `frontend/` tidak ada error (warning boleh)
+- [ ] iOS: app boot → splash → onboarding, tidak crash — commit "Flutter smoke test" ada, tapi belum ada catatan hasil di Sprint Log
+- [ ] Android: app boot → splash → onboarding, tidak crash — sama, belum terdokumentasi
+- [ ] `flutter analyze` di `frontend/` tidak ada error (warning boleh) — belum dijalankan/dicatat
 
 ---
 
