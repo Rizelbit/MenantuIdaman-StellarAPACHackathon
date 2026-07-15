@@ -1,4 +1,4 @@
-package com.example.kirimin
+package com.kirimin.app
 
 import io.flutter.embedding.android.FlutterActivity
 

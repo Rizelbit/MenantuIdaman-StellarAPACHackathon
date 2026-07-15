@@ -37,7 +37,7 @@ flutter run \
 
 | Key | Value |
 |-----|-------|
-| **Application ID** | `com.example.kirimin` (default Flutter, ganti kalau ubah Bundle ID) |
+| **Application ID** | `com.kirimin.app` |
 | **Debug SHA-256** | `54:4E:87:DD:1E:1C:29:A5:D1:A0:2F:65:28:AF:91:67:AC:40:D0:E1:CC:35:61:18:8C:55:9A:16:BA:B4:12:D3` |
 
 ---
