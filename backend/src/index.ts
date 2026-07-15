@@ -25,8 +25,20 @@ const USDC_SAC_ADDRESS = process.env.USDC_SAC_ADDRESS || "CBQHFCBIFPYBMV7CCMB3Y3
 
 // ---------------------------------------------------------------------------
 // Static: .well-known files untuk passkey native (iOS & Android)
+// `apple-app-site-association` tidak punya extension, jadi express.static
+// tidak bisa infer MIME type-nya dan default ke application/octet-stream.
+// iOS mensyaratkan Content-Type: application/json untuk file ini.
 // ---------------------------------------------------------------------------
-app.use("/.well-known", express.static("public/.well-known"));
+app.use(
+  "/.well-known",
+  express.static("public/.well-known", {
+    setHeaders: (res, path) => {
+      if (path.endsWith("apple-app-site-association") || path.endsWith(".json")) {
+        res.setHeader("Content-Type", "application/json");
+      }
+    },
+  })
+);
 
 // ---------------------------------------------------------------------------
 // Health check

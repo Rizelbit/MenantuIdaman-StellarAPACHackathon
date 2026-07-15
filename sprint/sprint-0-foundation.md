@@ -8,12 +8,12 @@ Menyiapkan seluruh infrastruktur agar sprint berikutnya bisa langsung fokus ke k
 
 - [x] Backend ter-deploy di Railway.app dengan URL HTTPS stabil (RP_ID sudah di-lock)
 - [x] `GET /health` dapat diakses publik dan mengembalikan `{"ok":true}`
-- [ ] `GET /.well-known/apple-app-site-association` → HTTP 200, JSON valid — 200 OK, tapi Content-Type salah (`application/octet-stream`) dan Team ID masih placeholder
+- [ ] `GET /.well-known/apple-app-site-association` → HTTP 200, JSON valid — Content-Type bug sudah **diperbaiki di kode** (2026-07-15), Bundle ID sudah `com.kirimin.app`; menunggu deploy untuk verifikasi live + Team ID masih placeholder (butuh Apple Developer Program)
 - [x] `GET /.well-known/assetlinks.json` → HTTP 200, JSON valid
-- [ ] iOS: Associated Domains entitlement terpasang di Xcode
+- [ ] iOS: Associated Domains entitlement terpasang di Xcode — entitlements file + pbxproj sudah di-wire manual (2026-07-15); belum dikonfirmasi buka di Xcode UI (perlu macOS)
 - [ ] Android: Asset Links terkonfigurasi di manifest — file sudah dikonfigurasi (manifest + strings.xml), tinggal verifikasi build & `adb logcat` di device fisik
-- [x] Stellar CLI terinstall + keypair deployer tersimpan aman
-- [ ] Passkey Kit factory contract ter-deploy di testnet → `FACTORY_CONTRACT_ID` tercatat — arsitektur berubah ke passkey-kit v1 (no factory), lihat S0-10
+- [x] Stellar CLI terinstall + keypair deployer tersimpan aman — balance deployer (10000 XLM) terverifikasi via Horizon API
+- [x] ~~Passkey Kit factory contract ter-deploy di testnet~~ → N/A, arsitektur berubah ke passkey-kit v1 (no factory); Wallet WASM Hash & Canonical Deployer tercatat sebagai gantinya, lihat S0-10
 - [x] ~~Launchtube testnet token tersedia~~ — **SKIPPED**, lihat S0-11. Deployer secret key tersedia untuk backend relayer (fee sponsorship langsung via Soroban RPC)
 - [x] Demo wallet (pengirim) terfund USDC/test-USD via testnet
 - [ ] Flutter boot di device fisik → splash screen muncul, tidak crash
@@ -30,10 +30,10 @@ Menyiapkan seluruh infrastruktur agar sprint berikutnya bisa langsung fokus ke k
 | [S0-04](#s0-04--buat-apple-app-site-association) | Buat `apple-app-site-association` | `ON GOING` | P0 |
 | [S0-05](#s0-05--buat-assetlinksjson) | Buat `assetlinks.json` | `FINISHED` | P0 |
 | [S0-06](#s0-06--verifikasi-well-known-endpoint-via-https) | Verifikasi `.well-known` endpoint | `ON GOING` | P0 |
-| [S0-07](#s0-07--setup-ios-associated-domains-di-xcode) | Setup iOS Associated Domains di Xcode | `TODO` | P0 |
+| [S0-07](#s0-07--setup-ios-associated-domains-di-xcode) | Setup iOS Associated Domains di Xcode | `ON GOING` | P0 |
 | [S0-08](#s0-08--setup-android-digital-asset-links) | Setup Android Digital Asset Links | `ON GOING` | P0 |
-| [S0-09](#s0-09--install-stellar-cli--generate-keypair-deployer) | Install Stellar CLI + generate keypair | `ON GOING` | P0 |
-| [S0-10](#s0-10--deploy-passkey-kit-factory-contract-ke-testnet) | Deploy Passkey Kit factory ke testnet | `ON GOING` | P0 |
+| [S0-09](#s0-09--install-stellar-cli--generate-keypair-deployer) | Install Stellar CLI + generate keypair | `FINISHED` | P0 |
+| [S0-10](#s0-10--deploy-passkey-kit-factory-contract-ke-testnet) | Deploy Passkey Kit factory ke testnet | `FINISHED` (N/A) | P0 |
 | [S0-11](#s0-11--dapatkan-launchtube-testnet-token) | ~~Dapatkan Launchtube testnet token~~ | `SKIPPED` | ~~P0~~ |
 | [S0-12](#s0-12--setup-demo-wallet-dan-fund-usdc-testnet) | Setup demo wallet + fund USDC testnet | `FINISHED` | P1 |
 | [S0-13](#s0-13--konfigurasi-flutter-dart-define) | Konfigurasi Flutter `--dart-define` | `ON GOING` | P0 |
@@ -90,19 +90,22 @@ STELLAR_NETWORK=testnet
 SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
 HORIZON_URL=https://horizon-testnet.stellar.org
 FRIENDBOT_URL=https://friendbot.stellar.org
-LAUNCHTUBE_URL=https://launchtube.xyz
-LAUNCHTUBE_TOKEN=PLACEHOLDER
-FACTORY_CONTRACT_ID=PLACEHOLDER
-SIGNER_SECRET_KEY=PLACEHOLDER
+USDC_ISSUER=GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5
+RELAYER_BASE_URL=                            # kosongkan untuk MVP (backend self-relay via SIGNER_SECRET_KEY), lihat S0-11
+RELAYER_API_KEY=                             # isi hanya bila upgrade ke OpenZeppelin Channels
+SIGNER_SECRET_KEY=<isi dari sprint/SECRETS.md>
+DEMO_RECEIVER_CONTRACT=                      # isi setelah smart wallet penerima demo dibuat
 ```
+
+> **Update (2026-07-15):** daftar di atas sudah disinkronkan dengan `backend/.env.example` saat ini. `LAUNCHTUBE_URL`/`LAUNCHTUBE_TOKEN` dan `FACTORY_CONTRACT_ID` **dihapus** dari daftar — Launchtube di-skip (S0-11) dan `passkey-kit` v1 tidak pakai factory contract (S0-10).
 
 3. Klik **Save** → Railway akan redeploy otomatis.
 
 **File yang diubah/dibuat:**  
-- `backend/.env.example` — update jika ada field baru yang perlu didokumentasikan
+- `backend/.env.example` — sudah sinkron dengan daftar di atas (tidak ada lagi `LAUNCHTUBE_*`/`FACTORY_CONTRACT_ID`)
 
 **Acceptance criteria:**
-- [ ] Railway dashboard menampilkan semua variabel di atas tanpa error — belum terverifikasi; `FACTORY_CONTRACT_ID` masih placeholder di `.env.example`
+- [ ] Railway dashboard menampilkan semua variabel di atas tanpa error — **belum bisa diverifikasi dari sini, perlu akses Railway dashboard**; nilai `SIGNER_SECRET_KEY` ada di `sprint/SECRETS.md`
 - [x] `curl https://<railway-url>/health` tetap mengembalikan `200 OK` setelah redeploy
 
 ---
@@ -159,6 +162,11 @@ flutter run \
 
 **Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** setup
 
+**Update (2026-07-15):**  
+- Bundle ID resmi diputuskan `com.kirimin.app` (selaras dengan Android S0-08) — file ini dan `Runner.xcodeproj/project.pbxproj` sudah diupdate ke `com.kirimin.app`.
+- Bug Content-Type (`application/octet-stream` bukan `application/json`) sudah **diperbaiki di kode** (`backend/src/index.ts`, `express.static` sekarang set header eksplisit untuk file tanpa extension). **Belum live** — perlu deploy ke Railway untuk verifikasi via `curl`.
+- Team ID **masih placeholder** (`TEAM_ID_NANTI_DIISI`) — butuh akun Apple Developer Program berbayar, tidak bisa diisi dari sini. Lihat `NEXT_STEPS.md` di root repo.
+
 **Konteks:**  
 iOS membutuhkan file ini di `https://<RP_ID>/.well-known/apple-app-site-association` (tanpa ekstensi `.json`) agar Associated Domains berfungsi dan passkey biometrik muncul. File sudah di-serve oleh backend via `express.static`.
 
@@ -185,9 +193,9 @@ Contoh: `"ABCDE12345.com.kirimin.app"`
 
 **Acceptance criteria:**
 - [x] File ada di path yang benar (tanpa `.json` extension)
-- [ ] Setelah deploy Railway: `curl -v https://<railway-url>/.well-known/apple-app-site-association` → HTTP 200, `Content-Type: application/json` — 200 OK tapi Content-Type masih `application/octet-stream`
+- [ ] Setelah deploy Railway: `curl -v https://<railway-url>/.well-known/apple-app-site-association` → HTTP 200, `Content-Type: application/json` — fix sudah di kode, **menunggu deploy** untuk verifikasi live
 - [x] JSON valid (test di [jsonlint.com](https://jsonlint.com))
-- [ ] Team ID dan Bundle ID sudah benar — masih `TEAM_ID_NANTI_DIISI` dan `com.example.kirimin` (default Flutter)
+- [ ] Team ID dan Bundle ID sudah benar — Bundle ID sudah `com.kirimin.app`, Team ID masih `TEAM_ID_NANTI_DIISI` (butuh Apple Developer Program)
 
 **Catatan risiko:**  
 Bundle ID di file ini harus **identik persis** dengan Bundle ID di Xcode. Satu huruf beda = passkey tidak muncul tanpa pesan error jelas.
@@ -278,16 +286,25 @@ curl -v https://<railway-url>/.well-known/assetlinks.json
 
 **Acceptance criteria:**
 - [x] Semua 3 endpoint mengembalikan HTTP 200
-- [ ] `Content-Type` adalah `application/json` — AASA masih `application/octet-stream`
-- [ ] iOS AASA validator: VALID — belum dijalankan
-- [ ] Android Digital Asset Links tester: VALID — belum dijalankan
+- [ ] `Content-Type` adalah `application/json` — fix sudah di kode (S0-04), **menunggu deploy** untuk verifikasi live
+- [ ] iOS AASA validator: VALID — belum dijalankan, perlu deploy + Team ID terisi dulu
+- [ ] Android Digital Asset Links tester: VALID — belum dijalankan, perlu deploy `assetlinks.json` (S0-08) dulu
 
 ---
 
 ## S0-07 — Setup iOS Associated Domains di Xcode
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** setup  
+**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** setup  
 **Dependencies:** S0-03, S0-04, S0-06
+
+**Update (2026-07-15):**  
+Capability Associated Domains di-wire langsung via text edit (setara hasil klik "+ Capability" di Xcode), tanpa perlu buka Xcode:
+- `frontend/ios/Runner/Runner.entitlements` dibuat baru, isi `com.apple.developer.associated-domains` → `webcredentials:menantuidaman-stellarapachackathon-production.up.railway.app`
+- `Runner.xcodeproj/project.pbxproj` — `CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements` ditambahkan ke 3 build config Runner (Debug/Release/Profile)
+- `PRODUCT_BUNDLE_IDENTIFIER` di 3 config yang sama diganti dari `com.example.kirimin` → `com.kirimin.app` (selaras Android S0-08 & AASA S0-04)
+- pbxproj tervalidasi (brace count seimbang, bukan corrupt)
+
+**Belum bisa dieksekusi dari sini** (butuh Xcode + macOS + Apple Developer account + device fisik, tidak tersedia di environment ini): buka project di Xcode untuk konfirmasi capability muncul di UI, isi `DEVELOPMENT_TEAM` dengan Team ID asli, build & install ke device. Lihat `NEXT_STEPS.md` di root repo untuk langkah detail.
 
 **Konteks:**  
 Entitlement ini memberitahu iOS bahwa app kita "memiliki" domain yang meng-host `apple-app-site-association`. Tanpa ini, iOS menolak menampilkan passkey biometrik.
@@ -305,13 +322,13 @@ Entitlement ini memberitahu iOS bahwa app kita "memiliki" domain yang meng-host 
 6. Build ke device fisik: `flutter build ios --debug` atau langsung `flutter run`.
 
 **File yang diubah/dibuat:**
-- `frontend/ios/Runner/Runner.entitlements` — Xcode update otomatis
-- `frontend/ios/Runner.xcworkspace/...` — Xcode update otomatis
+- `frontend/ios/Runner/Runner.entitlements` — dibuat manual (biasanya Xcode update otomatis, di sini di-hand-edit)
+- `frontend/ios/Runner.xcodeproj/project.pbxproj` — `CODE_SIGN_ENTITLEMENTS` & `PRODUCT_BUNDLE_IDENTIFIER` di-hand-edit
 
 **Acceptance criteria:**
-- [ ] Associated Domains muncul di Signing & Capabilities dengan value yang benar
-- [ ] Build iOS berhasil tanpa error signing
-- [ ] Di device fisik: install app → tidak crash
+- [x] Associated Domains muncul di Signing & Capabilities dengan value yang benar — terkonfigurasi via entitlements file, **belum dikonfirmasi visual di Xcode UI** (tidak ada akses Xcode di environment ini)
+- [ ] Build iOS berhasil tanpa error signing — belum dicoba, butuh Team ID + Xcode
+- [ ] Di device fisik: install app → tidak crash — belum dicoba
 
 **Catatan risiko:**  
 Bila menggunakan free Apple Developer account (Personal Team), Associated Domains mungkin tidak berfungsi — fitur ini butuh paid Apple Developer Program ($99/tahun). Verifikasi di awal apakah tim punya paid account.
@@ -373,7 +390,10 @@ Package `passkeys` versi 2.x mungkin sudah handle sebagian konfigurasi Android s
 
 ## S0-09 — Install Stellar CLI + generate keypair deployer
 
-**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** setup
+**Status:** `FINISHED` | **Prioritas:** P0 | **Tipe:** setup
+
+**Update (2026-07-15):**  
+Balance deployer diverifikasi langsung via Horizon API (`GET https://horizon-testnet.stellar.org/accounts/<deployer-pubkey>`) tanpa perlu Stellar CLI terinstall — akun ditemukan dengan **10000 XLM**. Dicatat di `sprint/CONFIG.md`.
 
 **Konteks:**  
 Stellar CLI dibutuhkan untuk deploy factory contract dan operasi testnet. Keypair deployer adalah akun yang dipakai untuk sign deploy transaction (bukan akun pengguna).
@@ -417,18 +437,20 @@ Stellar CLI dibutuhkan untuk deploy factory contract dan operasi testnet. Keypai
 
 **Acceptance criteria:**
 - [x] `stellar --version` mengembalikan versi >= 21.0 — tercatat `27.0.0` di `sprint/CONFIG.md`
-- [ ] `stellar account info deployer --network testnet` menampilkan account dengan XLM balance — belum terverifikasi/tercatat
+- [x] `stellar account info deployer --network testnet` menampilkan account dengan XLM balance — diverifikasi via Horizon API: 10000 XLM
 - [x] Secret key tersimpan aman di SECRETS.md (tidak di-commit)
 
 ---
 
 ## S0-10 — Deploy Passkey Kit factory contract ke testnet
 
-**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** setup  
+**Status:** `FINISHED` (arsitektur berubah — N/A, lihat catatan) | **Prioritas:** P0 | **Tipe:** setup  
 **Dependencies:** S0-09
 
 **Catatan kondisi terakhir:**  
-Passkey Kit yang dipakai tim ternyata versi **v1** (`passkey-kit@^0.14.0`), yang **tidak memakai arsitektur factory contract** lagi — sebagai gantinya, wallet WASM di-upload langsung ke testnet dan di-deploy per-user dari deployer kanonis. `sprint/CONFIG.md` sudah mencatat **Wallet WASM Hash** dan **Canonical Deployer**, tapi `FACTORY_CONTRACT_ID` (sesuai definisi issue ini) tidak akan pernah terisi. `backend/.env.example` dan `contracts/README.md` masih menyebut pola factory — perlu disinkronkan ke arsitektur v1 di iterasi berikutnya.
+Passkey Kit yang dipakai tim ternyata versi **v1** (`passkey-kit@^0.14.0`), yang **tidak memakai arsitektur factory contract** lagi — sebagai gantinya, wallet WASM di-upload langsung ke testnet dan di-deploy per-user dari deployer kanonis. `sprint/CONFIG.md` sudah mencatat **Wallet WASM Hash** dan **Canonical Deployer**, tapi `FACTORY_CONTRACT_ID` (sesuai definisi issue ini) tidak akan pernah terisi.
+
+**Update (2026-07-15):** `backend/.env.example` sudah tidak menyebut `FACTORY_CONTRACT_ID` sama sekali (field dihapus), dan `contracts/README.md` sudah ditulis ulang untuk menjelaskan arsitektur v1 (wallet WASM + canonical deployer, bukan factory). S0-02's daftar env var Railway juga sudah disinkronkan.
 
 **Konteks (asli, untuk referensi):**  
 Factory contract adalah smart contract Soroban yang men-deploy smart wallet baru untuk tiap user. Kita **tidak menulis contract dari nol** — kita deploy contract dari Passkey Kit.
@@ -465,13 +487,14 @@ Factory contract adalah smart contract Soroban yang men-deploy smart wallet baru
    - `sprint/CONFIG.md`: catat Factory Contract ID
 
 **File yang diubah/dibuat:**
-- `sprint/CONFIG.md` — tambah Factory Contract ID
-- `backend/.env.example` — pastikan `FACTORY_CONTRACT_ID` ada sebagai field
+- `sprint/CONFIG.md` — Wallet WASM Hash & Canonical Deployer tercatat (pengganti Factory Contract ID)
+- `backend/.env.example` — `FACTORY_CONTRACT_ID` dihapus (tidak relevan di v1)
+- `contracts/README.md` — ditulis ulang untuk arsitektur v1
 
 **Acceptance criteria:**
-- [ ] Factory Contract ID tersedia (dari existing deploy atau deploy sendiri) — N/A, v1 tidak pakai factory (lihat catatan di atas)
-- [ ] `stellar contract invoke --id <FACTORY_CONTRACT_ID> --network testnet -- --help` tidak error — N/A
-- [ ] Railway env var `FACTORY_CONTRACT_ID` sudah terisi — masih `PLACEHOLDER`
+- [x] ~~Factory Contract ID tersedia~~ — N/A, v1 tidak pakai factory (lihat catatan di atas); Wallet WASM Hash & Canonical Deployer tersedia sebagai gantinya
+- [x] ~~`stellar contract invoke --id <FACTORY_CONTRACT_ID>` ...~~ — N/A
+- [x] ~~Railway env var `FACTORY_CONTRACT_ID` sudah terisi~~ — N/A, field sudah dihapus dari `.env.example`
 
 **Catatan risiko:**  
 Bila deploy sendiri, pastikan versi Stellar CLI yang dipakai kompatibel dengan contract Rust di passkey-kit. Pin versi CLI dan catat di `sprint/CONFIG.md`.
@@ -595,11 +618,12 @@ Flutter butuh `BACKEND_URL` dan `RP_ID` saat build/run. Ini di-pass via `--dart-
 
 **File yang diubah/dibuat:**
 - `frontend/run-dev.sh` (baru)
-- `.vscode/launch.json` (baru atau update)
+- `.vscode/launch.json` (baru, 2026-07-15)
 
 **Acceptance criteria:**
-- [x] `./frontend/run-dev.sh` menjalankan Flutter dengan nilai yang benar — file ada, RP_ID & BACKEND_URL sesuai `CONFIG.md`; `.vscode/launch.json` belum dibuat
-- [ ] `Env.backendUrl` dan `Env.rpId` di app terisi dengan nilai Railway (verify via debugger atau print sementara) — belum diverifikasi runtime
+- [x] `./frontend/run-dev.sh` menjalankan Flutter dengan nilai yang benar — file ada, RP_ID & BACKEND_URL sesuai `CONFIG.md`
+- [x] `.vscode/launch.json` dibuat dengan `--dart-define` yang sama seperti `run-dev.sh`
+- [ ] `Env.backendUrl` dan `Env.rpId` di app terisi dengan nilai Railway (verify via debugger atau print sementara) — belum diverifikasi runtime, butuh Flutter SDK
 
 ---
 
@@ -631,8 +655,13 @@ Sebelum mulai Sprint 1, verifikasi bahwa app sudah boot dengan benar di device f
 
 | Tanggal | Update | Status |
 |---------|--------|--------|
-| | | |
+| 2026-07-15 | Launchtube di-skip (deprecated), backend jadi relayer sendiri via `SIGNER_SECRET_KEY` | Keputusan (S0-11) |
+| 2026-07-15 | Android package rename `com.example.kirimin` → `com.kirimin.app` (gradle, Kotlin dir, assetlinks.json, CONFIG.md) | Selesai (S0-08) |
+| 2026-07-15 | Audit menyeluruh status Sprint 0 vs kondisi repo aktual, semua field status direkonsiliasi | Selesai |
+| 2026-07-15 | Fix bug Content-Type AASA (`express.static` set header eksplisit), sync Bundle ID iOS ke `com.kirimin.app`, wire Associated Domains entitlement manual, verifikasi balance deployer via Horizon API, sync `contracts/README.md` & S0-02 env var list ke arsitektur v1, buat `.vscode/launch.json` | Selesai (kode), lihat `NEXT_STEPS.md` untuk sisa langkah manual |
 
 ## Blockers & Catatan
 
-> _Tulis blocker, keputusan, atau temuan penting di sini. Contoh: "Apple Developer Account hanya free tier, coba workaround di S0-07."_
+- **Deploy pending**: seluruh fix di atas ada di working tree lokal / commit lokal, **belum di-push ke `origin`** → Railway belum redeploy → endpoint `.well-known` live masih versi lama. Push dulu sebelum verifikasi apapun yang butuh live URL (S0-04, S0-06, S0-08 device test).
+- **iOS Team ID**: butuh Apple Developer Program berbayar ($99/tahun). Tanpa ini, S0-07 tidak bisa selesai penuh (build ke device perlu signing dengan Team ID asli). Personal Team (gratis) kemungkinan tidak mendukung Associated Domains.
+- **Device fisik & Flutter SDK**: environment kerja saat ini tidak punya Flutter SDK, Xcode, atau device fisik — semua verifikasi runtime (build, install, `adb logcat`, `flutter analyze`) harus dilakukan manual oleh anggota tim yang punya akses. Lihat `NEXT_STEPS.md` di root repo untuk checklist lengkap.

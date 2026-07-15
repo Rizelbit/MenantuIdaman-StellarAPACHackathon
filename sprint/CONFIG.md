@@ -28,8 +28,8 @@ flutter run \
 | Key | Value |
 |-----|-------|
 | **Team ID** | `PLACEHOLDER` — butuh Apple Developer Program ($99/thn) |
-| **Bundle ID** | `com.example.kirimin` (default Flutter) |
-| **Associated Domains** | `webcredentials:menantuidaman-stellarapachackathon-production.up.railway.app` |
+| **Bundle ID** | `com.kirimin.app` |
+| **Associated Domains** | `webcredentials:menantuidaman-stellarapachackathon-production.up.railway.app` — sudah di `Runner.entitlements`, tinggal isi Team ID untuk signing |
 
 ---
 
@@ -55,6 +55,7 @@ flutter run \
 | **Canonical Deployer** (passkey-kit v1) | `GC2C7AWLS2FMFTQAHW3IBUB4ZXVP4E37XNLEF2IK7IVXBB6CMEPCSXFO` |
 | **Canonical Deployer Seed** | `sha256("kalepail")` — jangan diubah |
 | **Deployer Public Key** (kita) | `GCLC34ARATQ6OATCJLEOAGTAFTKD45H5VSKNO2EPJQHHNEYNZGJ4OAQ7` |
+| **Deployer Balance** | 10000 XLM (terverifikasi via Horizon API 2026-07-15) |
 | **Demo Sender Public Key** | `GCUA7JMJ7MAWFV2SNFIHGN6XCNEZGIMUMDHSB6QVAPZJEPE666OFID6R` |
 | **Demo Receiver Public Key** | `GCWFVMEWRVLMU7ON4Y7W5UNJUFEWOMEEHJGRZJHEBUWNZNB3A3HCJ2H4` |
 | **Demo Sender Balance** | 1000 testUSD + 10000 XLM (testnet) |
