@@ -43,7 +43,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       // the demo through; otherwise the user falls back to the passcode.
       if (!await auth.isDeviceSupported()) return Env.useMock;
       return await auth.authenticate(
-        localizedReason: 'Masuk ke Kirimin dengan Face ID',
+        localizedReason: 'Log in to Kirimin with Face ID',
         // Allow the device passcode as a fallback to Face ID.
         biometricOnly: false,
         // Retry rather than fail if the app is backgrounded mid-prompt
@@ -74,8 +74,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         _busy = false;
         _attempts++;
         _error = _attempts >= 2
-            ? 'Face ID belum berhasil. Coba lagi atau gunakan passcode.'
-            : 'Face ID dibatalkan. Coba lagi.';
+            ? 'Face ID didn\'t work. Try again or use your passcode.'
+            : 'Face ID cancelled. Try again.';
       });
       return;
     }
@@ -84,7 +84,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     // redirect moves to Home once signed in; we also push it explicitly.
     final failure = await ref
         .read(authControllerProvider.notifier)
-        .registerWithPasskey('Pengguna Kirimin');
+        .registerWithPasskey('Kirimin User');
     if (!mounted) return;
     if (failure == null) {
       context.goNamed(Routes.home);

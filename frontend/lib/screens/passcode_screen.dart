@@ -42,7 +42,7 @@ class _PasscodeScreenState extends ConsumerState<PasscodeScreen> {
     setState(() => _busy = true);
     final failure = await ref
         .read(authControllerProvider.notifier)
-        .registerWithPasskey('Pengguna Kirimin');
+        .registerWithPasskey('Kirimin User');
     if (!mounted) return;
     if (failure == null) {
       context.goNamed(Routes.home);
@@ -77,7 +77,7 @@ class _PasscodeScreenState extends ConsumerState<PasscodeScreen> {
               children: [
                 const Spacer(flex: 2),
                 const Text(
-                  'Masukkan passcode',
+                  'Enter passcode',
                   style: TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 22,
@@ -88,7 +88,7 @@ class _PasscodeScreenState extends ConsumerState<PasscodeScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Masukkan 6 digit PIN kamu untuk masuk.',
+                  'Enter your 6-digit PIN to log in.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontFamily: 'Manrope', fontSize: 15, color: _muted),

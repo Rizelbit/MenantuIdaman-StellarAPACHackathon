@@ -167,7 +167,7 @@ class WalletApi {
           e.type == DioExceptionType.connectionError) {
         return const Err(AppFailure.network);
       }
-      return Err(AppFailure('Gagal memproses. Coba lagi.', cause: e));
+      return Err(AppFailure('Couldn\'t process that. Try again.', cause: e));
     } catch (e) {
       return const Err(AppFailure.generic);
     }

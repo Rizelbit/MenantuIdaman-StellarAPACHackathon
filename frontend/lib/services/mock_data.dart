@@ -12,7 +12,7 @@ List<Contact> seedContacts() => [
       const Contact(
         id: 'c1',
         name: 'Ibu',
-        relation: 'Ibu',
+        relation: 'Mother',
         initials: 'IB',
         accountRef: '•••• 3092',
         isFavorite: true,
@@ -20,7 +20,7 @@ List<Contact> seedContacts() => [
       const Contact(
         id: 'c2',
         name: 'Ayu (Adik)',
-        relation: 'Adik',
+        relation: 'Sister',
         initials: 'AY',
         accountRef: '•••• 7741',
         isFavorite: true,
@@ -28,7 +28,7 @@ List<Contact> seedContacts() => [
       const Contact(
         id: 'c3',
         name: 'Pak Slamet',
-        relation: 'Ayah',
+        relation: 'Father',
         initials: 'PS',
         accountRef: '•••• 5510',
         isFavorite: false,
@@ -39,21 +39,12 @@ List<Contact> seedContacts() => [
 List<PromoBanner> seedPromos() => [
       const PromoBanner(
         id: 'promo-split-bill-launch',
-        title: 'Sekarang bisa split bill bareng keluarga',
+        title: 'Split the bill!',
         subtitle:
-            'Bagi tagihan listrik, sewa, atau belanja bulanan tanpa ribet hitung manual.',
-        ctaLabel: 'Coba Split Bill',
+            'Electricity, rent, groceries, and dinner bills done much faster.',
+        ctaLabel: "Let's split it",
         deepLink: '/split',
-        badge: 'Baru',
-        spotlight: SpotlightVariant.sunset,
-      ),
-      const PromoBanner(
-        id: 'promo-fee-transparency',
-        title: 'Biaya transparan, selalu.',
-        subtitle:
-            'Kamu selalu tahu persis berapa yang keluarga terima sebelum kirim.',
-        ctaLabel: 'Pelajari',
-        deepLink: '/promo/promo-fee-transparency',
+        badge: 'New',
         spotlight: SpotlightVariant.aurora,
       ),
     ];
@@ -73,11 +64,11 @@ List<AppTransaction> seedTransactions() {
       status: TxStatus.settled,
       direction: TxDirection.send,
       reference: 'KRM-8F2A091',
-      note: 'Belanja bulan ini',
+      note: 'Groceries this month',
     ),
     AppTransaction(
       id: 'tx2',
-      counterpartyName: 'Tagihan Listrik (3 orang)',
+      counterpartyName: 'Electricity bill',
       amountIdr: 150000,
       createdAt: now.subtract(const Duration(days: 2, hours: 3)),
       status: TxStatus.pending,
@@ -115,7 +106,7 @@ SplitBill seedSplit() {
   final now = DateTime.now();
   return SplitBill(
     id: 'split1',
-    title: 'Listrik Juli 2026',
+    title: 'Electricity, July 2026',
     totalIdr: 450000,
     createdAt: now.subtract(const Duration(days: 3, hours: 6)),
     participants: const [
@@ -133,7 +124,7 @@ SplitBill seedSplit() {
       ),
       SplitParticipant(
         contactId: 'self',
-        name: 'Kamu',
+        name: 'You',
         shareIdr: 150000,
         isSelf: true,
         status: ParticipantStatus.paid,
