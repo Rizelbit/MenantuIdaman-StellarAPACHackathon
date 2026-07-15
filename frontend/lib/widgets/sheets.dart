@@ -4,13 +4,15 @@ import 'pill_button.dart';
 
 /// Face ID / biometric confirm sheet used before a sensitive action (sending
 /// money, revealing a secret). Resolves `true` only when the user taps the
-/// primary confirm button; a swipe-to-dismiss or the "Batal" text button both
-/// resolve `false`.
+/// primary confirm button; a swipe-to-dismiss or the "Cancel" button both
+/// resolve `false`. Confirm and cancel share the same pill button shape so the
+/// two read as a matched pair.
 Future<bool> showBiometricConfirmSheet(
   BuildContext context, {
   required String headline,
   required String subline,
-  String confirmLabel = 'Konfirmasi dengan Face ID',
+  String confirmLabel = 'Confirm with Face ID',
+  String cancelLabel = 'Cancel',
 }) async {
   final result = await showModalBottomSheet<bool>(
     context: context,
@@ -49,9 +51,10 @@ Future<bool> showBiometricConfirmSheet(
               icon: Icons.face,
               onPressed: () => Navigator.pop(ctx, true),
             ),
-            TextButton(
+            const SizedBox(height: KSpace.sm),
+            SecondaryPillButton(
+              label: cancelLabel,
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal'),
             ),
           ],
         ),

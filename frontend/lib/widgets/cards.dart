@@ -36,6 +36,83 @@ class SurfaceCard extends StatelessWidget {
   }
 }
 
+/// One label→value pair for [InfoRowsCard]. [emphasize] renders the bolded
+/// total/summary line; [valueColor] overrides the value color (e.g. green for
+/// a zero fee). [valueMonospace] is for reference codes.
+class InfoRow {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final bool emphasize;
+  final bool valueMonospace;
+  const InfoRow(
+    this.label,
+    this.value, {
+    this.valueColor,
+    this.emphasize = false,
+    this.valueMonospace = false,
+  });
+}
+
+/// A surface-1 card of [InfoRow]s separated by hairline dividers — the shared
+/// "details / receipt / breakdown" pattern (transaction detail, send review,
+/// send success). Labels sit left in muted 14px; values right in 14px w600
+/// (the emphasized total steps up to a bolder, larger figure). Matches the
+/// reference's 18px side padding + 13px row rhythm with a divider between rows.
+class InfoRowsCard extends StatelessWidget {
+  final List<InfoRow> rows;
+  const InfoRowsCard({required this.rows, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = KColors.of(Theme.of(context).brightness);
+    final text = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: p.surface1,
+        borderRadius: BorderRadius.circular(KRadius.xl),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    rows[i].label,
+                    style: text.bodySmall?.copyWith(
+                      color: rows[i].emphasize ? p.ink : p.inkMuted,
+                      fontWeight: rows[i].emphasize ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(width: KSpace.md),
+                  Flexible(
+                    child: Text(
+                      rows[i].value,
+                      textAlign: TextAlign.right,
+                      style: (rows[i].emphasize ? text.titleMedium : text.bodySmall)?.copyWith(
+                        color: rows[i].valueColor ?? p.ink,
+                        fontWeight: rows[i].emphasize ? FontWeight.w700 : FontWeight.w600,
+                        fontFamily: rows[i].valueMonospace ? 'monospace' : 'Manrope',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (i != rows.length - 1) Divider(height: 1, color: p.hairline),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// Full-bleed gradient panel — the one hero surface a screen is allowed to
 /// spend its accent gradient on (aurora blue by default; `sunset` swaps in
 /// the warm gradient for a celebratory/success moment — never both on one
