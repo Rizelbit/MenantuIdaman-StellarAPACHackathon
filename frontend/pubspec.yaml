@@ -1,5 +1,5 @@
-name: kirimin
-description: "Invisible crypto remittance — kirim uang ke keluarga, cukup pakai Face ID."
+name: Kirimin
+description: "Northstar-Stellar Based Digital Wallet Mobile Application in ASEAN Countries"
 publish_to: "none"
 version: 0.1.0+1
 
@@ -24,9 +24,6 @@ dependencies:
   # Formatting Rp / $ / tanggal (locale id_ID)
   intl: ^0.20.3
 
-  # Tipografi brand: Plus Jakarta Sans (design system §4)
-  google_fonts: ^8.1.0
-
   # OPSIONAL: fallback UX biometrik saja (BUKAN pengganti passkey/secp256r1)
   local_auth: ^3.0.2
 
@@ -42,4 +39,18 @@ flutter:
   uses-material-design: true
   # assets:
   #   - assets/images/
-  # fonts di-load via google_fonts atau bundle manual — lihat app/theme.dart
+  fonts:
+    # Manrope is the app's sole typeface (design system v1.1 — Inter fully
+    # retired) — bundled offline, one variable-font file, many weights.
+    - family: Manrope
+      fonts:
+        - asset: lib/assets/fonts/Manrope-VariableFont_wght.ttf
+          weight: 400
+        - asset: lib/assets/fonts/Manrope-VariableFont_wght.ttf
+          weight: 500
+        - asset: lib/assets/fonts/Manrope-VariableFont_wght.ttf
+          weight: 600
+        - asset: lib/assets/fonts/Manrope-VariableFont_wght.ttf
+          weight: 700
+        - asset: lib/assets/fonts/Manrope-VariableFont_wght.ttf
+          weight: 800

@@ -38,7 +38,7 @@ class QuickAction extends StatelessWidget {
           const SizedBox(height: KSpace.xs),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: p.ink),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: p.ink),
           ),
         ],
       ),

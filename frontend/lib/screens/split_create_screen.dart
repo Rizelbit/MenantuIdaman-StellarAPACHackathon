@@ -71,7 +71,7 @@ class _SplitCreateScreenState extends ConsumerState<SplitCreateScreen> {
           const SizedBox(height: KSpace.lg),
           _TitleField(controller: _titleCtrl, onChanged: ctrl.setTitle),
           const SizedBox(height: KSpace.lg),
-          Text('Bagi dengan', style: text.labelSmall?.copyWith(color: p.inkMuted)),
+          Text('Bagi dengan', style: text.titleMedium?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.xs),
           const _ParticipantPicker(),
         ],
@@ -93,7 +93,7 @@ class _TotalAmountField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Total tagihan', style: text.labelSmall?.copyWith(color: p.inkMuted)),
+        Text('Total tagihan', style: text.titleMedium?.copyWith(color: p.inkMuted)),
         const SizedBox(height: KSpace.xs),
         TextField(
           controller: controller,
@@ -124,7 +124,7 @@ class _TitleField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Untuk apa?', style: text.labelSmall?.copyWith(color: p.inkMuted)),
+        Text('Untuk apa?', style: text.titleMedium?.copyWith(color: p.inkMuted)),
         const SizedBox(height: KSpace.xs),
         TextField(
           controller: controller,
@@ -208,7 +208,7 @@ class _ParticipantPicker extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
 
     return SizedBox(
-      height: 84,
+      height: 92,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
@@ -220,11 +220,11 @@ class _ParticipantPicker extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    MonogramAvatar(initials: _initialsOf(participant.name)),
+                    MonogramAvatar(initials: _initialsOf(participant.name), size: KSize.avatarMd),
                     const SizedBox(height: KSpace.xs),
                     Text(
                       participant.name,
-                      style: text.labelSmall?.copyWith(color: p.ink),
+                      style: text.bodySmall?.copyWith(color: p.ink),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
@@ -252,7 +252,7 @@ class _ParticipantPicker extends ConsumerWidget {
                     child: Icon(Icons.add, size: 20, color: p.ink),
                   ),
                   const SizedBox(height: KSpace.xs),
-                  Text('Tambah', style: text.labelSmall?.copyWith(color: p.ink)),
+                  Text('Tambah', style: text.bodySmall?.copyWith(color: p.ink)),
                 ],
               ),
             ),

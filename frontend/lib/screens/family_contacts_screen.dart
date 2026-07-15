@@ -48,7 +48,7 @@ class FamilyContactsScreen extends ConsumerWidget {
                 const SizedBox(height: KSpace.md),
                 if (favorites.isNotEmpty) ...[
                   Text('FAVORIT',
-                      style: text.labelSmall?.copyWith(color: p.inkMuted)),
+                      style: text.titleMedium?.copyWith(color: p.inkMuted)),
                   const SizedBox(height: KSpace.xs),
                   for (final c in favorites)
                     _ContactListTile(
@@ -59,7 +59,7 @@ class FamilyContactsScreen extends ConsumerWidget {
                 ],
                 if (others.isNotEmpty) ...[
                   Text('SEMUA KONTAK',
-                      style: text.labelSmall?.copyWith(color: p.inkMuted)),
+                      style: text.titleMedium?.copyWith(color: p.inkMuted)),
                   const SizedBox(height: KSpace.xs),
                   for (final c in others)
                     _ContactListTile(
@@ -174,11 +174,11 @@ class _AddContactSheetState extends ConsumerState<_AddContactSheet> {
           children: [
             Text('Tambah kontak', style: text.titleMedium),
             const SizedBox(height: KSpace.md),
-            Text('Nama', style: text.labelSmall?.copyWith(color: p.inkMuted)),
+            Text('Nama', style: text.titleMedium?.copyWith(color: p.inkMuted)),
             const SizedBox(height: KSpace.xs),
             TextField(controller: _nameCtrl, style: text.bodyLarge),
             const SizedBox(height: KSpace.sm),
-            Text('Hubungan', style: text.labelSmall?.copyWith(color: p.inkMuted)),
+            Text('Hubungan', style: text.titleMedium?.copyWith(color: p.inkMuted)),
             const SizedBox(height: KSpace.xs),
             TextField(
               controller: _relationCtrl,
@@ -186,7 +186,7 @@ class _AddContactSheetState extends ConsumerState<_AddContactSheet> {
               decoration: const InputDecoration(hintText: 'Ibu/Adik/Ayah'),
             ),
             const SizedBox(height: KSpace.sm),
-            Text('Nomor rekening', style: text.labelSmall?.copyWith(color: p.inkMuted)),
+            Text('Nomor rekening', style: text.titleMedium?.copyWith(color: p.inkMuted)),
             const SizedBox(height: KSpace.xs),
             TextField(
               controller: _accountCtrl,

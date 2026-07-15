@@ -118,7 +118,7 @@ class _RequestAmountScreenState extends ConsumerState<RequestAmountScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: KSpace.md),
-          Text('Dari', style: text.labelSmall?.copyWith(color: p.inkMuted)),
+          Text('Dari', style: text.titleMedium?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.xs),
           SurfaceCard(
             onTap: () => _pickContact(context, ref),
@@ -149,7 +149,7 @@ class _RequestAmountScreenState extends ConsumerState<RequestAmountScreen> {
             ),
           ),
           const SizedBox(height: KSpace.lg),
-          Text('Nominal', style: text.labelSmall?.copyWith(color: p.inkMuted)),
+          Text('Nominal', style: text.titleMedium?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.xs),
           TextField(
             controller: _amountCtrl,
@@ -162,7 +162,7 @@ class _RequestAmountScreenState extends ConsumerState<RequestAmountScreen> {
             },
           ),
           const SizedBox(height: KSpace.lg),
-          Text('Catatan', style: text.labelSmall?.copyWith(color: p.inkMuted)),
+          Text('Catatan', style: text.titleMedium?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.xs),
           TextField(
             controller: _noteCtrl,

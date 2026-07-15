@@ -147,7 +147,7 @@ class _ShareRow extends StatelessWidget {
           const EdgeInsets.symmetric(horizontal: KSpace.md, vertical: KSpace.sm),
       child: Row(
         children: [
-          MonogramAvatar(initials: _initialsOf(participant.name), size: 36),
+          MonogramAvatar(initials: _initialsOf(participant.name), size: KSize.avatarSm),
           const SizedBox(width: KSpace.sm),
           Expanded(child: Text(participant.name, style: text.bodyLarge)),
           if (splitEvenly)

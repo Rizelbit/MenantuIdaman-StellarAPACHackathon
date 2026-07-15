@@ -118,7 +118,7 @@ class _AmountHeader extends StatelessWidget {
                 decoration: BoxDecoration(color: p.surface1, shape: BoxShape.circle),
                 child: Icon(Icons.call_split, size: 24, color: p.ink),
               )
-            : MonogramAvatar(initials: _initialsOf(tx.counterpartyName), size: 56),
+            : MonogramAvatar(initials: _initialsOf(tx.counterpartyName), size: KSize.avatarLg),
         const SizedBox(height: KSpace.md),
         Text(
           '$sign${formatMoney(tx.amountIdr, Currency.idr)}',

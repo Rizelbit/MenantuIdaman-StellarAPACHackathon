@@ -138,7 +138,7 @@ class SendAmountScreen extends ConsumerWidget {
           const SizedBox(height: KSpace.xl),
           Text('Nominal kirim',
               textAlign: TextAlign.center,
-              style: text.labelSmall?.copyWith(color: p.inkMuted)),
+              style: text.titleMedium?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.xs),
           Center(child: MoneyText(amountIdr: send.amountIdr, size: 44)),
           const SizedBox(height: KSpace.xs),

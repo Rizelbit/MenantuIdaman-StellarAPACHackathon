@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../app/router.dart';
 import '../state/auth_controller.dart';
@@ -77,9 +76,10 @@ class _PasscodeScreenState extends ConsumerState<PasscodeScreen> {
             child: Column(
               children: [
                 const Spacer(flex: 2),
-                Text(
+                const Text(
                   'Masukkan passcode',
-                  style: GoogleFonts.manrope(
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.4,
@@ -87,10 +87,11 @@ class _PasscodeScreenState extends ConsumerState<PasscodeScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Masukkan 6 digit PIN kamu untuk masuk.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.manrope(fontSize: 15, color: _muted),
+                  style: TextStyle(
+                      fontFamily: 'Manrope', fontSize: 15, color: _muted),
                 ),
                 const SizedBox(height: 32),
                 // PIN dots.
@@ -150,9 +151,8 @@ class _PinPad extends StatelessWidget {
           width: 72,
           height: 72,
           child: Material(
-            color: label.isEmpty && child == null
-                ? Colors.transparent
-                : _surface,
+            color:
+                label.isEmpty && child == null ? Colors.transparent : _surface,
             shape: const CircleBorder(),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -161,7 +161,8 @@ class _PinPad extends StatelessWidget {
                 child: child ??
                     Text(
                       label,
-                      style: GoogleFonts.manrope(
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
                         color: _ink,
@@ -174,15 +175,21 @@ class _PinPad extends StatelessWidget {
       );
     }
 
-    Widget row(List<Widget> children) => Row(
-        mainAxisAlignment: MainAxisAlignment.center, children: children);
+    Widget row(List<Widget> children) =>
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: children);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        row([for (final d in ['1', '2', '3']) key(d, onTap: () => onKey(d))]),
-        row([for (final d in ['4', '5', '6']) key(d, onTap: () => onKey(d))]),
-        row([for (final d in ['7', '8', '9']) key(d, onTap: () => onKey(d))]),
+        row([
+          for (final d in ['1', '2', '3']) key(d, onTap: () => onKey(d))
+        ]),
+        row([
+          for (final d in ['4', '5', '6']) key(d, onTap: () => onKey(d))
+        ]),
+        row([
+          for (final d in ['7', '8', '9']) key(d, onTap: () => onKey(d))
+        ]),
         row([
           key(''),
           key('0', onTap: () => onKey('0')),

@@ -131,7 +131,7 @@ class _PromoHero extends StatelessWidget {
                     color: onColor.withValues(alpha: 0.16),
                     borderRadius: BorderRadius.circular(KRadius.pill),
                   ),
-                  child: Text(promo.badge!, style: text.labelSmall?.copyWith(color: onColor)),
+                  child: Text(promo.badge!, style: text.bodySmall?.copyWith(color: onColor)),
                 ),
                 const SizedBox(height: KSpace.sm),
               ],
