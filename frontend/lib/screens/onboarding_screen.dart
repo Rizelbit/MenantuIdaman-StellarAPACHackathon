@@ -17,7 +17,7 @@ class OnboardingScreen extends ConsumerWidget {
     // MVP: nama user statik. (Nanti: field nama sederhana.)
     final failure = await ref
         .read(authControllerProvider.notifier)
-        .registerWithPasskey('Pengguna Kirimin');
+        .registerWithPasskey('Kirimin User');
 
     if (!context.mounted) return;
     if (failure == null) {
@@ -37,7 +37,7 @@ class OnboardingScreen extends ConsumerWidget {
     return AppScaffold(
       scrollable: false,
       bottom: PrimaryPillButton(
-        label: 'Buat akun dengan Face ID',
+        label: 'Create account with Face ID',
         icon: Icons.face,
         loading: loading,
         onPressed: () => _register(context, ref),
@@ -46,23 +46,23 @@ class OnboardingScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Spacer(),
-          Text('Kirim uang ke keluarga,\ncukup pakai Face ID.',
+          Text('Send money to family,\nwith just Face ID.',
               style: textTheme.headlineLarge),
           const SizedBox(height: KSpace.md),
           Text(
-            'Tanpa kata sandi rumit, tanpa kartu. Buat akun sekali sentuh — '
-            'uang sampai ke rekening keluarga dalam hitungan detik.',
+            'No complicated passwords, no cards. Create an account with one '
+            'touch — money reaches family in seconds.',
             style: textTheme.bodyMedium?.copyWith(color: p.inkMuted),
           ),
           const Spacer(flex: 2),
           const _AssurancePoint(
               icon: Icons.verified_user_outlined,
-              text: 'Aman dengan sidik jari / wajahmu'),
+              text: 'Secured by your fingerprint or face'),
           const _AssurancePoint(
-              icon: Icons.bolt_outlined, text: 'Sampai dalam hitungan detik'),
+              icon: Icons.bolt_outlined, text: 'Arrives in seconds'),
           const _AssurancePoint(
               icon: Icons.receipt_long_outlined,
-              text: 'Biaya jelas sebelum kamu kirim'),
+              text: 'Clear fees before you send'),
           const Spacer(),
         ],
       ),
