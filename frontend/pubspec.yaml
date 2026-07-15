@@ -34,6 +34,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.0
 
 flutter:
   uses-material-design: true
@@ -54,3 +55,15 @@ flutter:
           weight: 700
         - asset: lib/assets/fonts/Manrope-VariableFont_wght.ttf
           weight: 800
+
+flutter_launcher_icons:  
+  android: true
+  ios: true
+  macos:
+    generate: true
+    image_path: "lib/assets/icon/Kirimin.png"
+  windows:
+    generate: true
+    image_path: "lib/assets/icon/Kirimin.png"
+    iconsize: 48
+  image_path: "lib/assets/icon/Kirimin.png"
