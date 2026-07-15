@@ -54,8 +54,8 @@ HORIZON_URL=https://horizon-testnet.stellar.org
 FRIENDBOT_URL=https://friendbot.stellar.org
 USDC_ISSUER=GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5
 SIGNER_SECRET_KEY=<dari sprint/SECRETS.md>
-RELAYER_BASE_URL=
-RELAYER_API_KEY=
+RELAYER_BASE_URL=<lihat §1a di bawah — WAJIB, bukan opsional>
+RELAYER_API_KEY=<lihat §1a di bawah — WAJIB, bukan opsional>
 DEMO_RECEIVER_CONTRACT=
 ```
 
@@ -64,6 +64,41 @@ Catatan: `LAUNCHTUBE_URL`, `LAUNCHTUBE_TOKEN`, dan `FACTORY_CONTRACT_ID` **tidak
 Setelah save, Railway redeploy otomatis. Verifikasi `/health` masih 200.
 
 **Menyelesaikan:** S0-02.
+
+---
+
+## 1a. WAJIB: Konfigurasi OpenZeppelin Channels (`RELAYER_BASE_URL` / `RELAYER_API_KEY`)
+
+> **Update (2026-07-15):** Keputusan awal S0-11 ("skip Launchtube, backend self-relay langsung pakai `SIGNER_SECRET_KEY` tanpa relayer eksternal") **terbukti salah** setelah dicek langsung ke source code `passkey-kit` yang terpasang (`node_modules/passkey-kit/dist/server.js` + README package-nya). `PasskeyServer.send()` **selalu** butuh relayer terkonfigurasi — tanpa itu, setiap panggilan langsung gagal dengan error `RELAYER_NOT_CONFIGURED`. Ini artinya:
+> - `/wallet/create` akan "sukses" secara HTTP (200 OK, ada `contractAddress`) **tapi wallet-nya tidak pernah benar-benar ter-deploy on-chain**, karena kode tidak mengecek `submitResult.success` sebelum lanjut.
+> - `/tx/submit` (kirim uang) akan gagal total dengan cara yang sama.
+>
+> Jadi ini bukan langkah opsional/nice-to-have — **tanpa ini, seluruh app tidak akan berfungsi**, terlepas dari fix-fix lain yang sudah dilakukan.
+
+**Kabar baiknya: tidak perlu ubah kode sama sekali.** `backend/src/passkey.ts` (`getServer()`) sudah benar mengonsumsi `RELAYER_BASE_URL`/`RELAYER_API_KEY` persis sesuai bentuk yang dibutuhkan `passkey-kit`'s `RelayerClient` (pembungkus tipis dari `@openzeppelin/relayer-plugin-channels`). Ini murni isu konfigurasi, bukan bug kode.
+
+**Langkah:**
+
+1. Generate API key testnet gratis — **tidak ada proses approval, instan, self-service** (sudah diverifikasi langsung: request ke URL ini langsung mengembalikan JSON berisi key baru, tanpa form/login/waiting period):
+   ```
+   https://channels.openzeppelin.com/testnet/gen
+   ```
+   Buka di browser atau `curl` — responsnya `{"apiKey":"<uuid>"}`. Setiap request menghasilkan key baru, jadi generate sekali saja dan simpan hasilnya (jangan buka berkali-kali tanpa perlu).
+
+2. Isi di Railway dashboard → Variables:
+   ```
+   RELAYER_BASE_URL=https://channels.openzeppelin.com
+   RELAYER_API_KEY=<apiKey dari langkah 1>
+   ```
+
+3. **Simpan juga** `RELAYER_API_KEY` di `sprint/SECRETS.md` (file ini sudah di-gitignore) supaya tim lain tidak perlu generate ulang. **Jangan** taruh key asli di `sprint/CONFIG.md` atau file lain yang ter-commit ke git.
+
+4. Setelah Railway redeploy, test `/wallet/create` dengan curl atau lewat app — kalau berhasil, `submitResult.success` akan `true` dan muncul log `[wallet/create] deploy tx: <hash>` di Railway logs (bukan `deploy failed`).
+
+**File terkait (tidak perlu diubah, sudah benar):**
+- `backend/src/passkey.ts` — `getServer()` sudah membangun `relayer: { baseUrl, apiKey }` dengan benar dari env vars ini.
+
+**Menyelesaikan:** prasyarat mutlak untuk S1-05, S2-01, S2-02 — tanpa ini, onboarding maupun kirim uang tidak akan pernah benar-benar berhasil on-chain.
 
 ---
 

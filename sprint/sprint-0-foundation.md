@@ -14,7 +14,7 @@ Menyiapkan seluruh infrastruktur agar sprint berikutnya bisa langsung fokus ke k
 - [ ] Android: Asset Links terkonfigurasi di manifest — file sudah dikonfigurasi (manifest + strings.xml), tinggal verifikasi build & `adb logcat` di device fisik
 - [x] Stellar CLI terinstall + keypair deployer tersimpan aman — balance deployer (10000 XLM) terverifikasi via Horizon API
 - [x] ~~Passkey Kit factory contract ter-deploy di testnet~~ → N/A, arsitektur berubah ke passkey-kit v1 (no factory); Wallet WASM Hash & Canonical Deployer tercatat sebagai gantinya, lihat S0-10
-- [x] ~~Launchtube testnet token tersedia~~ — **SKIPPED**, lihat S0-11. Deployer secret key tersedia untuk backend relayer (fee sponsorship langsung via Soroban RPC)
+- [ ] ~~Launchtube testnet token tersedia~~ — **SKIPPED** (Launchtube-nya), tapi diganti **OpenZeppelin Channels** yang ternyata tetap wajib — lihat koreksi di S0-11 & `NEXT_STEPS.md` §1a. Belum terisi di Railway.
 - [x] Demo wallet (pengirim) terfund USDC/test-USD via testnet
 - [ ] Flutter boot di device fisik → splash screen muncul, tidak crash
 
@@ -91,8 +91,8 @@ SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
 HORIZON_URL=https://horizon-testnet.stellar.org
 FRIENDBOT_URL=https://friendbot.stellar.org
 USDC_ISSUER=GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5
-RELAYER_BASE_URL=                            # kosongkan untuk MVP (backend self-relay via SIGNER_SECRET_KEY), lihat S0-11
-RELAYER_API_KEY=                             # isi hanya bila upgrade ke OpenZeppelin Channels
+RELAYER_BASE_URL=https://channels.openzeppelin.com  # WAJIB diisi — lihat koreksi S0-11 & NEXT_STEPS.md §1a
+RELAYER_API_KEY=<generate di https://channels.openzeppelin.com/testnet/gen>  # WAJIB
 SIGNER_SECRET_KEY=<isi dari sprint/SECRETS.md>
 DEMO_RECEIVER_CONTRACT=                      # isi setelah smart wallet penerima demo dibuat
 ```
@@ -510,19 +510,21 @@ Issue ini **di-skip**, bukan dikerjakan. Alasan:
 
 1. **Launchtube sudah deprecated.** Repo resmi [`stellar/launchtube`](https://github.com/stellar/launchtube) sudah *archived* (per 2026-03-09), berstatus legacy, dan README-nya eksplisit bilang *"this service should not be used for new projects"* — diarahkan migrasi ke **OpenZeppelin Relayer + Channels Plugin**.
 2. **S0-10 tidak pernah butuh Launchtube** — deploy factory/contract dilakukan via `stellar contract deploy --source deployer --network testnet` (CLI langsung), bukan lewat Launchtube.
-3. **Fee sponsorship tetap tercapai tanpa Launchtube.** Backend bisa jadi "relayer" sendiri: pegang `SIGNER_SECRET_KEY` deployer, submit transaksi langsung ke Soroban RPC, bayar fee dari XLM deployer. User tetap tidak butuh XLM (north star "no gas" tetap terjaga dari sisi UX). Ini sudah didokumentasikan di `sprint/CONFIG.md` § Fee Sponsorship, dan `SIGNER_SECRET_KEY` sudah tersedia di `sprint/SECRETS.md`.
-4. Upgrade ke **OpenZeppelin Channels** (sesuai rekomendasi migrasi resmi Stellar) tetap jadi opsi upgrade produksi nanti, bukan kebutuhan MVP/testnet.
+3. ~~Fee sponsorship tetap tercapai tanpa Launchtube. Backend bisa jadi "relayer" sendiri: pegang `SIGNER_SECRET_KEY` deployer, submit transaksi langsung ke Soroban RPC.~~ **KOREKSI (2026-07-15, setelah `node_modules` ter-install dan source code `passkey-kit` dicek langsung):** asumsi ini **salah**. `PasskeyServer.send()` (dipakai `/wallet/create` dan `/tx/submit`) **secara desain selalu mensyaratkan relayer terkonfigurasi** — tanpa `RELAYER_BASE_URL`/`RELAYER_API_KEY`, setiap panggilan gagal dengan `RELAYER_NOT_CONFIGURED` (lihat `node_modules/passkey-kit/dist/server.js` baris ~88, dan README package: *"All wallet writes are fee-sponsored by the OpenZeppelin Relayer Channels service"*). Tidak ada jalur submit-langsung-pakai-secret-key yang didukung resmi oleh library ini. `SIGNER_SECRET_KEY` tetap dipakai (sebagai `deploySource` di `PasskeyKit`), tapi itu untuk *menandatangani* transaksi deploy, bukan untuk *submit* — submission tetap butuh relayer.
+4. **Keputusan revisi:** pakai **OpenZeppelin Channels** (bukan opsi upgrade nanti — ternyata **wajib** untuk MVP juga). Untungnya ini gratis & instan untuk testnet: generate API key self-service tanpa approval di `https://channels.openzeppelin.com/testnet/gen`, isi `RELAYER_BASE_URL=https://channels.openzeppelin.com` + `RELAYER_API_KEY=<hasil generate>` di Railway. **Tidak perlu ubah kode** — `backend/src/passkey.ts` (`getServer()`) sudah benar mengonsumsi kedua env var ini. Lihat `NEXT_STEPS.md` §1a untuk langkah detail.
 
 **Konteks asli (untuk referensi historis):**  
 ~~Launchtube menangani fee & sequence number untuk transaksi Soroban. Tanpa token ini, kita harus memastikan user punya XLM untuk gas — yang bertentangan dengan north star "no gas". Token testnet bisa didapat gratis.~~
 
 **File yang diubah/dibuat:**
-- `sprint/SECRETS.md` — `SIGNER_SECRET_KEY` (deployer) sudah terisi, dipakai backend relayer sebagai pengganti Launchtube
-- `backend/.env.example` — `LAUNCHTUBE_URL`/`LAUNCHTUBE_TOKEN` ditandai opsional (lihat catatan di file)
+- `sprint/SECRETS.md` — `SIGNER_SECRET_KEY` (deployer) tersedia, dipakai sebagai `deploySource` (penanda tangan deploy tx, bukan pengganti relayer)
+- `backend/.env.example` — `LAUNCHTUBE_URL`/`LAUNCHTUBE_TOKEN` dihapus (tidak relevan); `RELAYER_BASE_URL`/`RELAYER_API_KEY` **wajib diisi**, lihat `NEXT_STEPS.md` §1a
+- `backend/src/passkey.ts` — tidak diubah, `getServer()` sudah benar sejak awal
 
-**Acceptance criteria (revisi):**
-- [x] Deployer secret key tersedia di `sprint/SECRETS.md` untuk backend relayer
-- [ ] (Sprint 1) Endpoint `tx/submit` di backend mengirim transaksi langsung ke Soroban RPC menggunakan deployer's XLM sebagai fee sponsor
+**Acceptance criteria (revisi 2026-07-15):**
+- [x] Deployer secret key tersedia di `sprint/SECRETS.md`, dipakai sebagai `deploySource`
+- [ ] `RELAYER_BASE_URL`/`RELAYER_API_KEY` (OpenZeppelin Channels) terisi di Railway — **blocking**, lihat `NEXT_STEPS.md` §1a
+- [ ] `/wallet/create` menghasilkan `submitResult.success: true` (deploy tx benar-benar settle on-chain, bukan cuma HTTP 200) — belum diverifikasi, butuh langkah di atas dulu
 
 ---
 
@@ -659,9 +661,12 @@ Sebelum mulai Sprint 1, verifikasi bahwa app sudah boot dengan benar di device f
 | 2026-07-15 | Android package rename `com.example.kirimin` → `com.kirimin.app` (gradle, Kotlin dir, assetlinks.json, CONFIG.md) | Selesai (S0-08) |
 | 2026-07-15 | Audit menyeluruh status Sprint 0 vs kondisi repo aktual, semua field status direkonsiliasi | Selesai |
 | 2026-07-15 | Fix bug Content-Type AASA (`express.static` set header eksplisit), sync Bundle ID iOS ke `com.kirimin.app`, wire Associated Domains entitlement manual, verifikasi balance deployer via Horizon API, sync `contracts/README.md` & S0-02 env var list ke arsitektur v1, buat `.vscode/launch.json` | Selesai (kode), lihat `NEXT_STEPS.md` untuk sisa langkah manual |
+| 2026-07-15 | Push ke `origin` selesai, `.well-known` (Content-Type + `assetlinks.json`) terverifikasi live di Railway | Selesai |
+| 2026-07-15 | Audit `SPRINT-TONIGHT.md` vs kode: ketemu & fix `USE_MOCK` trap di `run-dev.sh` (default mock, tidak pernah nyambung backend asli), endpoint `GET /home/:userId/feed` yang hilang (blocking HomeScreen), dan `USDC_SAC_ADDRESS` hardcode yang **bukan contract ID valid** (transfer dijamin gagal). Semua fixed & `tsc` clean compile setelah `npm ci`. | Selesai (S3-01/S3-02 setara) |
+| 2026-07-15 | **Koreksi besar S0-11**: cek langsung source `passkey-kit` (`node_modules` ter-install) membuktikan `PasskeyServer.send()` selalu butuh relayer — keputusan awal "self-relay tanpa relayer eksternal" salah. Solusi: OpenZeppelin Channels (bukan self-host, cukup `https://channels.openzeppelin.com` + API key self-service tanpa approval dari `/testnet/gen`). Tidak perlu ubah kode, murni env var. | **Blocking — belum diisi di Railway**, lihat `NEXT_STEPS.md` §1a |
 
 ## Blockers & Catatan
 
-- **Deploy pending**: seluruh fix di atas ada di working tree lokal / commit lokal, **belum di-push ke `origin`** → Railway belum redeploy → endpoint `.well-known` live masih versi lama. Push dulu sebelum verifikasi apapun yang butuh live URL (S0-04, S0-06, S0-08 device test).
-- **iOS Team ID**: butuh Apple Developer Program berbayar ($99/tahun). Tanpa ini, S0-07 tidak bisa selesai penuh (build ke device perlu signing dengan Team ID asli). Personal Team (gratis) kemungkinan tidak mendukung Associated Domains.
-- **Device fisik & Flutter SDK**: environment kerja saat ini tidak punya Flutter SDK, Xcode, atau device fisik — semua verifikasi runtime (build, install, `adb logcat`, `flutter analyze`) harus dilakukan manual oleh anggota tim yang punya akses. Lihat `NEXT_STEPS.md` di root repo untuk checklist lengkap.
+- **BLOCKING SEKARANG: `RELAYER_BASE_URL`/`RELAYER_API_KEY` belum diisi di Railway.** Tanpa ini, `/wallet/create` dan `/tx/submit` selalu gagal submit on-chain (walau `/wallet/create` tetap balas HTTP 200 secara menyesatkan). Lihat `NEXT_STEPS.md` §1a — langkahnya cepat (generate key self-service, tempel ke Railway), tidak perlu kode baru.
+- **iOS di-skip permanen untuk demo ini** — Apple Developer Program berbayar ($99/tahun) tidak tersedia. Demo Android-only. S0-07 & bagian iOS di S1/S2/S3/S4 jadi N/A, bukan blocker lagi.
+- **Device fisik & Flutter SDK**: environment kerja Claude tidak punya Flutter SDK/Xcode/device fisik — semua verifikasi runtime (build, install, `adb logcat`, `flutter analyze`) harus dilakukan manual oleh anggota tim yang punya akses (sudah bisa `flutter pub get` per info terakhir). Lihat `NEXT_STEPS.md` untuk checklist lengkap.
