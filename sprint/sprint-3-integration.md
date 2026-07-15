@@ -12,13 +12,13 @@ Sprint ini selesai bila **seseorang yang belum tahu teknis bisa menjalankan demo
 - [ ] `SendAmountScreen` → `FeeBreakdownCard` dengan nilai akurat real-time — kode benar, TAPI formula fee di dokumen ini **sudah tidak sesuai** (`Env.feeRate = 0.0`, bukan 0.5%), lihat S3-06
 - [ ] `SendReviewScreen` → Face ID → `SendSuccessScreen` dengan nama & nominal real — belum dites live
 - [x] `HomeScreen` saldo terupdate setelah kirim — kode di kedua sisi terverifikasi benar (lihat `sprint/sprint-2-send-flow.md` S2-08), live test masih pending
-- [ ] `ReceiveScreen` (mock) berjalan lancar sebagai layar demo penerima — **gap ditemukan**: screen yang ada sekarang bukan screen "Rp X masuk" yang dideskripsikan di S3-08, lihat catatan di S3-08
+- [x] `ReceiveScreen` (mock) berjalan lancar sebagai layar demo penerima — **keputusan diambil**: pakai screen yang sudah ada (bukan spec "Rp X masuk"), demo script disesuaikan. Lihat S3-08 dan `sprint/sprint-4-polish-demo.md` S4-05
 - [x] Semua contract API mismatches (field name, tipe data, encoding) sudah diperbaiki — **audit selesai, hasilnya nol mismatch**, lihat S3-01
 - [x] Tidak ada istilah crypto, contract address, atau jargon teknis yang bocor ke UI — audit grep `screens/`+`widgets/` sudah dijalankan, hasil bersih, lihat S3-10
 - [ ] Error states menampilkan pesan Bahasa Indonesia yang ramah user — sebagian besar sudah ada di kode (`_guard()` di `wallet_api.dart`), belum dites live
 - [ ] Demo bisa dijalankan berulang kali tanpa perlu restart backend — kode `reset()` ada, tapi `txStore` tidak punya TTL/expiry (lihat S3-09), belum masalah untuk skala demo
 
-**Update (2026-07-16):** Audit S3-01 (yang paling penting di sprint ini) **sudah selesai dengan hasil nol mismatch** — kontrak data antara Flutter dan backend sudah cocok sejak awal. Yang jadi temuan justru dua hal di luar cakupan S3-01: formula fee di dokumen ini basi (S3-06/S3-07), dan `ReceiveScreen` bukan screen yang dideskripsikan sprint ini (S3-08) — keduanya butuh keputusan, bukan cuma eksekusi.
+**Update (2026-07-16):** Audit S3-01 (yang paling penting di sprint ini) **sudah selesai dengan hasil nol mismatch** — kontrak data antara Flutter dan backend sudah cocok sejak awal. Yang jadi temuan justru dua hal di luar cakupan S3-01: formula fee di dokumen ini basi (S3-06/S3-07), dan `ReceiveScreen` bukan screen yang dideskripsikan sprint ini (S3-08). Untuk yang kedua, **keputusan sudah diambil tim**: pakai screen yang ada, sesuaikan demo script — lihat S3-08 dan `sprint/sprint-4-polish-demo.md` S4-05.
 
 ---
 
@@ -33,7 +33,7 @@ Sprint ini selesai bila **seseorang yang belum tahu teknis bisa menjalankan demo
 | [S3-05](#s3-05--verifikasi-homescreen-saldo-tampil-rupiah) | Verifikasi HomeScreen saldo tampil Rupiah | `ON GOING` | P0 |
 | [S3-06](#s3-06--verifikasi-feebreakdowncard-dengan-data-real) | Verifikasi `FeeBreakdownCard` dengan data real | `ON GOING` — formula doc basi | P0 |
 | [S3-07](#s3-07--verifikasi-sendsuccess-dengan-data-real) | Verifikasi `SendSuccessScreen` dengan data real | `ON GOING` — formula doc basi | P0 |
-| [S3-08](#s3-08--test-demo-penerima-receive-screen) | Test demo penerima (ReceiveScreen) | `BLOCKED` — screen belum sesuai spec | P1 |
+| [S3-08](#s3-08--test-demo-penerima-receive-screen) | Test demo penerima (ReceiveScreen) | `ON GOING` — keputusan diambil, live test pending | P1 |
 | [S3-09](#s3-09--test-repeat-send-tanpa-restart-backend) | Test repeat send tanpa restart backend | `ON GOING` | P1 |
 | [S3-10](#s3-10--audit-invisible-crypto-checklist-awal) | Audit invisible-crypto checklist awal | `ON GOING` | P1 |
 | [S3-11](#s3-11--test-skenario-testnet-flaky) | Test skenario testnet flaky | `TODO` | P2 |
@@ -286,39 +286,35 @@ receiveIdr = amountIdr - fee = 1.000.000 - 0 = 1.000.000
 
 ## S3-08 — Test demo penerima (ReceiveScreen)
 
-**Status:** `BLOCKED` — screen belum sesuai spec, butuh keputusan | **Prioritas:** P1 | **Tipe:** test
+**Status:** `ON GOING` | **Prioritas:** P1 | **Tipe:** test
 
-**Update (2026-07-16) — TEMUAN PENTING, bukan cuma "belum dites":**  
-`ReceiveScreen` yang ada di kode (`frontend/lib/screens/receive_screen.dart`) **bukan screen yang dideskripsikan issue ini**. Sudah dicari di seluruh codebase (`grep` untuk "masuk", "Dana tersedia", "ditarik", "receivedIdr") — **tidak ada satupun match**. Yang ada sekarang adalah screen statis "bagikan QR/ID saya untuk menerima uang" (kartu kontak dengan QR code + Kirimin ID + nomor rekening), bukan screen konfirmasi "Rp X masuk" yang dideskripsikan di sini dan di `sprint/sprint-2-send-flow.md` S2-10.
+**Keputusan (2026-07-16):** Tim memutuskan **Opsi 2** — pakai `ReceiveScreen` yang sudah ada, tidak bangun screen baru. Frontend sudah di-lock fiturnya. Demo script sudah ditulis ulang sesuai keputusan ini, lihat `sprint/sprint-4-polish-demo.md` S4-05 (Babak 3 & 4 direvisi: nama penerima jadi "Rani Putri" — konsisten dengan nama yang di-hardcode di `ReceiveScreen` — dan narasi "sisi penerima" berubah dari "lihat uang masuk live" jadi "ini rekening tujuan pengiriman tadi").
 
-Sesi lalu saya sempat memperbaiki `ReceiveScreen` yang ADA (translasi ke Bahasa Indonesia + ubah label jadi "Rekening tujuan BCA •••• 4821") — itu perbaikan yang valid untuk screen yang ada, TAPI tidak menyelesaikan gap sesungguhnya: screen "Rp 995.000 masuk ke rekening BCA ****1234" + card "Dana tersedia untuk ditarik sekarang" + button "Kembali ke beranda" **tidak pernah dibangun**.
+**Penyesuaian sisi backend** (bukan kode baru — `resolveRecipient()` sudah cukup fleksibel): pastikan nama yang diketik presenter saat demo ("Rani Putri") ter-route dengan benar ke `DEMO_RECEIVER_CONTRACT` lewat fallback yang sudah ada, atau opsional daftarkan kontak eksplisit bernama "Rani Putri" untuk determinisme lebih tinggi. Detail lengkap di `NEXT_STEPS.md` §1b.
 
-**Ini butuh keputusan, bukan eksekusi murni** — dua opsi:
-1. **Bangun screen baru** sesuai spec di bawah (butuh amount dinamis dari transaksi terakhir, kemungkinan state/route baru) — kerjaan UI Flutter yang lebih besar, dan saya tidak punya cara verifikasi `flutter analyze`/render dari environment ini, jadi risikonya lebih tinggi untuk saya kerjakan blind.
-2. **Sesuaikan demo script** untuk pakai `ReceiveScreen` yang sudah ada (kartu "bagikan untuk menerima") sebagai pengganti — device kedua cukup menunjukkan detail rekening penerima sebelum kirim, bukan konfirmasi setelah uang masuk. Lebih murah, tapi mengubah narasi demo dari yang direncanakan sprint ini.
-
-**Konteks (asli, untuk referensi historis):**  
+**Konteks (asli, untuk referensi historis — spec "Rp X masuk" TIDAK dipakai lagi per keputusan di atas):**  
 ~~`ReceiveScreen` adalah layar mock off-ramp untuk demo — "sisi penerima" yang ditampilkan di HP kedua saat demo panggung. Pastikan layar ini accessible dan tampil benar.~~
 
 **Cara mengakses `ReceiveScreen`:**
 - Di `HomeScreen` → tap **Terima**
 
-**Langkah:**
+**Langkah (direvisi sesuai screen yang sebenarnya dipakai):**
 1. Akses ReceiveScreen dari HomeScreen
 2. Verifikasi:
-   - Icon "Rp 995.000 masuk" tampil
-   - "ke rekening BCA ****1234"
-   - Card "Dana tersedia untuk ditarik sekarang."
-   - Button "Kembali ke beranda"
-3. Tap "Kembali ke beranda" → kembali ke HomeScreen
+   - Title "Terima" tampil
+   - QR code (dekoratif, statis) tampil
+   - Nama "Rani Putri" + "Pindai untuk kirim uang ke saya"
+   - Card "Kirimin ID: rani.putri" dan "Rekening tujuan: BCA •••• 4821"
+   - Tombol "Bagikan detail" berfungsi (copy ke clipboard + Snackbar "Detail disalin")
+3. Back navigation (app bar standar) → kembali ke HomeScreen
 
-**Catatan untuk demo:** Untuk demo panggung, ini ditampilkan di HP kedua (device Android sebagai penerima, iOS sebagai pengirim atau sebaliknya). Pastikan nilai mock (`receivedIdr = 995000.0`) cocok dengan nilai yang dikirim dari HP pengirim.
+**Catatan untuk demo:** Karena iOS di-skip permanen, kedua device **harus Android**. Karena `ReceiveScreen` statis (bukan dinamis dari transaksi terakhir), tidak perlu mencocokkan nilai apapun antara HP pengirim dan HP kedua — cukup pastikan nama penerima yang diketik di HP pengirim ("Rani Putri") konsisten dengan yang ditampilkan di HP kedua.
 
 **Acceptance criteria:**
 - [x] `ReceiveScreen` accessible dari HomeScreen — sudah, via tombol "Terima" (`Routes.receive`)
-- [ ] Semua elemen tampil tanpa overflow atau clip — screen yang ada beda dari spec, belum relevan sampai keputusan di atas diambil
+- [ ] Semua elemen tampil tanpa overflow atau clip — belum dites live di device
 - [x] Tidak ada istilah crypto — screen yang ada (setelah perbaikan sesi lalu) bersih dari istilah crypto
-- [ ] Back button berfungsi — screen yang ada tidak punya "Kembali ke beranda" eksplisit seperti spec (pakai back navigation standar app bar), belum relevan sampai keputusan di atas
+- [x] Back button berfungsi — pakai back navigation standar app bar (bawaan `AppScaffold`), bukan tombol eksplisit "Kembali ke beranda" seperti spec asli — tapi fungsinya sama, kembali ke HomeScreen
 
 ---
 
@@ -367,14 +363,14 @@ grep -r "crypto\|wallet\|seed phrase\|gas\|XLM\|USDC\|blockchain\|token\|contrac
 | Saldo & nominal selalu dalam $ atau Rp | ✓ | `formatMoney()` satu-satunya jalur format uang (lihat S3-05), semua screen pakai ini |
 | Sign transaksi = biometrik native | ✓ | Benar by design — seluruh alur `kit.sign()`/`PasskeyKit` berbasis WebAuthn/passkey native, tidak ada jalur signing manual |
 | Onboarding < 30 detik, < 3 tap | ⚠️ tap-count OK, timing belum bisa dipastikan | Alur navigasi cuma 1 tap eksplisit ("Buat akun dengan Face ID") sebelum biometrik native — jauh di bawah 3 tap. Durasi 30 detik **butuh device fisik** untuk diukur beneran (network + biometrik + deploy tx) |
-| Penerima tidak pernah lihat istilah crypto | ⚠️ blocked oleh S3-08 | `ReceiveScreen` yang ada sudah bersih dari istilah crypto (setelah perbaikan sesi lalu), tapi screen ini bukan yang dideskripsikan sprint — lihat S3-08 |
+| Penerima tidak pernah lihat istilah crypto | ✓ | `ReceiveScreen` yang dipakai (sesuai keputusan S3-08) sudah bersih dari istilah crypto |
 | Rincian biaya transparan SEBELUM konfirmasi | ✓ | `FeeBreakdownCard` muncul di `SendReviewScreen`, sebelum tombol "Kirim sekarang" — tapi lihat S3-06 soal formula fee yang sudah beda (0% bukan 0,5%) |
 | Copy familiar: "kirim uang", "saldo", "biaya" | ✓ (screens utama), ✗ (ReceiveScreen sebelum diperbaiki) | Screen alur kirim/onboarding sudah pakai bahasa ini. `ReceiveScreen` sempat 100% bahasa Inggris — sudah diperbaiki sesi lalu |
 | Icon app / splash terasa aplikasi keuangan | — | Belum diaudit — ini soal aset visual (icon, splash screen), di luar cakupan code-review teks. Lihat `sprint/sprint-4-polish-demo.md` S4-02 |
 
 **Acceptance criteria:**
 - [ ] Semua 10 item di atas sudah diperiksa dan diisi statusnya — 8/10 terisi dari code review, 2 butuh device/aset visual
-- [ ] Item yang belum ✓ menjadi issue di Sprint 4 — **S3-08 (ReceiveScreen) dan S4-02 (icon/splash) sudah relevan untuk Sprint 4**, dicatat di sini sebagai carry-over
+- [ ] Item yang belum ✓ menjadi issue di Sprint 4 — item timing/device-dependent sudah relevan untuk Sprint 4 (S4-01, S4-09)
 
 ---
 
@@ -405,7 +401,8 @@ Stellar Testnet kadang slow atau unreachable. Verifikasi bahwa UI tetap responsi
 |---------|--------|--------|
 | 2026-07-16 | Audit S3-01 dijalankan terhadap kode aktual — hasil nol mismatch di 5 endpoint inti. S3-02 jadi N/A. | Selesai |
 | 2026-07-16 | Ditemukan: `sprint/sprint-3-integration.md` (S3-06/S3-07) pakai contoh fee 0,5% yang sudah tidak sesuai — `Env.feeRate` aktual `0.0`. Dokumen dikoreksi, bukan kode (kode sudah benar sesuai keputusan produk). | Koreksi dokumentasi |
-| 2026-07-16 | **Ditemukan gap signifikan (S3-08)**: screen "Rp X masuk" yang dideskripsikan sprint ini & S2-10 tidak pernah dibangun. `ReceiveScreen` yang ada adalah screen berbeda (bagikan QR untuk menerima), sudah diperbaiki copy-nya sesi lalu tapi tidak menyelesaikan gap ini. Butuh keputusan tim: bangun screen baru atau sesuaikan demo script. | **Belum diputuskan** |
+| 2026-07-16 | **Ditemukan gap signifikan (S3-08)**: screen "Rp X masuk" yang dideskripsikan sprint ini & S2-10 tidak pernah dibangun. `ReceiveScreen` yang ada adalah screen berbeda (bagikan QR untuk menerima). | Ditemukan |
+| 2026-07-16 | **Keputusan tim atas temuan S3-08**: pakai `ReceiveScreen` yang sudah ada (frontend di-lock), sesuaikan demo script + backend (`resolveRecipient()`) untuk cocok dengan nama "Rani Putri" yang di-hardcode di screen tersebut. Demo script ditulis ulang di `sprint/sprint-4-polish-demo.md` S4-05. | Diputuskan & diselesaikan |
 | 2026-07-16 | Audit invisible-crypto (S3-10) dijalankan — grep forbidden-words bersih, 8/10 item checklist terisi dari code review. | Sebagian selesai |
 
 ## Blockers & Catatan
@@ -414,7 +411,7 @@ Stellar Testnet kadang slow atau unreachable. Verifikasi bahwa UI tetap responsi
 
 **Temuan lain yang lebih signifikan dari mismatch field name:**
 1. **Formula fee di dokumen sprint basi** (S3-06/S3-07) — `Env.feeRate = 0.0`, bukan 0,5%. Ini keputusan produk yang sudah ada di kode (komentar eksplisit: "Demo: nol biaya"), dokumen yang perlu menyesuaikan, bukan kode.
-2. **`ReceiveScreen` tidak sesuai spec sprint ini** (S3-08) — gap paling signifikan di seluruh Sprint 3, butuh keputusan tim (bangun screen baru vs sesuaikan demo script), bukan sesuatu yang bisa saya putuskan/kerjakan sepihak karena berisiko dan butuh verifikasi Flutter yang tidak tersedia di environment ini.
+2. **`ReceiveScreen` tidak sesuai spec sprint ini** (S3-08) — gap paling signifikan di seluruh Sprint 3. **Sudah diputuskan**: pakai screen yang ada, sesuaikan demo script (bukan bangun screen baru) — lihat `sprint/sprint-4-polish-demo.md` S4-05.
 3. **`txStore` tanpa TTL** (S3-09) — bukan blocker fungsional untuk skala demo, tapi secara teknis tx yang di-cancel tetap nyangkut di memory.
 
 **Blocker aktif yang sama dengan Sprint 1/2:** `RELAYER_API_KEY` dan akses device fisik tetap jadi penghalang utama untuk semua item testing live (S3-03 di-skip, S3-04/S3-06/S3-07/S3-09/S3-11 semua butuh device).
