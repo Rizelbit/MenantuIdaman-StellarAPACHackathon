@@ -11,9 +11,9 @@ import '../state/split_controller.dart';
 import '../theme/tokens.dart';
 import '../widgets/widgets.dart';
 
-/// Home — layar showcase: saldo, promo, aksi cepat, kontak favorit, dan
-/// aktivitas terbaru, top ke bawah. Semua data dari [homeFeedProvider]; error
-/// tampil sebagai state dengan tombol coba lagi yang meng-invalidate provider.
+/// Home — showcase surface: balance, promo, quick actions, favorite contacts,
+/// and recent activity, top to bottom. All data comes from [homeFeedProvider];
+/// errors show a retry state that invalidates the provider.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -22,7 +22,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  // Toggle privasi saldo — state lokal murni tampilan, tidak memengaruhi data.
+  // Balance privacy toggle — pure display state, doesn't touch the data.
   bool _hiddenBalance = false;
 
   @override
@@ -40,12 +40,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               const EmptyView(
                 icon: Icons.error_outline,
-                title: 'Gagal memuat beranda',
-                subtitle: 'Periksa koneksi lalu coba lagi.',
+                title: 'Couldn\'t load home',
+                subtitle: 'Check your connection and try again.',
               ),
               const SizedBox(height: KSpace.md),
               SecondaryPillButton(
-                label: 'Coba lagi',
+                label: 'Try again',
                 onPressed: () => ref.invalidate(homeFeedProvider),
               ),
             ],
@@ -68,6 +68,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context.pushNamed(Routes.sendAmount);
     }
 
+    void goSplit() {
+      ref.read(splitControllerProvider.notifier).reset();
+      context.pushNamed(Routes.splitCreate);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -81,16 +86,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           onToggle: () => setState(() => _hiddenBalance = !_hiddenBalance),
         ),
         const SizedBox(height: KSpace.xl),
-        _PromoCarousel(promos: feed.promos),
+        _PromoSection(promos: feed.promos, onSplit: goSplit),
         const SizedBox(height: KSpace.xl),
         _QuickActionsRow(
-          onKirim: goSend,
-          onMinta: () => context.pushNamed(Routes.requestAmount),
-          onSplit: () {
-            ref.read(splitControllerProvider.notifier).reset();
-            context.pushNamed(Routes.splitCreate);
-          },
-          onTerima: () => context.pushNamed(Routes.receive),
+          onSend: goSend,
+          onRequest: () => context.pushNamed(Routes.requestAmount),
+          onSplit: goSplit,
+          onReceive: () => context.pushNamed(Routes.receive),
         ),
         const SizedBox(height: KSpace.xl),
         _FamilyShortcuts(
@@ -110,13 +112,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-/// Sapaan + avatar inisial di kanan.
+/// Two-line greeting on the left; notification bell + initials avatar on the
+/// right, matching the reference header.
 class _Header extends StatelessWidget {
   final String greetingName;
   const _Header({required this.greetingName});
 
   @override
   Widget build(BuildContext context) {
+    final p = KColors.of(Theme.of(context).brightness);
     final text = Theme.of(context).textTheme;
     final trimmed = greetingName.trim();
     final initial = trimmed.isEmpty ? '?' : trimmed[0].toUpperCase();
@@ -124,16 +128,74 @@ class _Header extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text('Selamat malam, $greetingName', style: text.headlineMedium),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Good evening,',
+                  style: text.bodySmall
+                      ?.copyWith(color: p.inkMuted, fontWeight: FontWeight.w400)),
+              const SizedBox(height: 2),
+              Text(
+                greetingName,
+                style: const TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.6,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
         const SizedBox(width: KSpace.sm),
+        _NotificationBell(
+          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No new notifications')),
+          ),
+        ),
+        const SizedBox(width: KSpace.xs),
         MonogramAvatar(initials: initial),
       ],
     );
   }
 }
 
-/// Saldo besar dengan toggle sembunyikan + rekening tujuan.
+/// Surface-1 bell button with an accent notification dot.
+class _NotificationBell extends StatelessWidget {
+  final VoidCallback onTap;
+  const _NotificationBell({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = KColors.of(Theme.of(context).brightness);
+    return SizedBox(
+      width: KSize.iconButton,
+      height: KSize.iconButton,
+      child: Stack(
+        children: [
+          CircleIconButton(icon: Icons.notifications_none, onPressed: onTap),
+          Positioned(
+            top: 9,
+            right: 10,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: p.accent,
+                border: Border.all(color: p.canvas, width: 1.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Large balance with a hide toggle + destination account.
 class _BalanceHero extends StatelessWidget {
   final double balanceIdr;
   final String accountRef;
@@ -155,7 +217,7 @@ class _BalanceHero extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Total saldo', style: text.titleMedium?.copyWith(color: p.inkMuted)),
+        Text('Total balance', style: text.titleMedium?.copyWith(color: p.inkMuted)),
         const SizedBox(height: KSpace.xs),
         Row(
           children: [
@@ -168,7 +230,7 @@ class _BalanceHero extends StatelessWidget {
             ),
             IconButton(
               onPressed: onToggle,
-              tooltip: hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo',
+              tooltip: hidden ? 'Show balance' : 'Hide balance',
               icon: Icon(
                 hidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                 color: p.inkMuted,
@@ -177,44 +239,31 @@ class _BalanceHero extends StatelessWidget {
           ],
         ),
         const SizedBox(height: KSpace.xs),
-        Text('$accountRef · Rekening utama',
+        Text('$accountRef · Main account',
             style: text.bodySmall?.copyWith(color: p.inkMuted)),
       ],
     );
   }
 }
 
-/// Scroll horizontal kartu promo — satu penuh terlihat + intip kartu
-/// berikutnya lewat lebar kartu yang lebih sempit dari area konten.
-class _PromoCarousel extends StatelessWidget {
+/// The single promo card (reference shows exactly one, full width — not a
+/// carousel). Renders the first promo; nothing when the feed has none.
+class _PromoSection extends StatelessWidget {
   final List<PromoBanner> promos;
-  const _PromoCarousel({required this.promos});
+  final VoidCallback onSplit;
+  const _PromoSection({required this.promos, required this.onSplit});
 
   @override
   Widget build(BuildContext context) {
     if (promos.isEmpty) return const SizedBox.shrink();
-
-    return SizedBox(
-      height: 176,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final cardWidth = constraints.maxWidth - KSpace.xxl;
-          return ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: promos.length,
-            separatorBuilder: (_, __) => const SizedBox(width: KSpace.sm),
-            itemBuilder: (context, i) =>
-                SizedBox(width: cardWidth, child: _PromoCard(promo: promos[i])),
-          );
-        },
-      ),
-    );
+    return _PromoCard(promo: promos.first, onCta: onSplit);
   }
 }
 
 class _PromoCard extends StatelessWidget {
   final PromoBanner promo;
-  const _PromoCard({required this.promo});
+  final VoidCallback onCta;
+  const _PromoCard({required this.promo, required this.onCta});
 
   @override
   Widget build(BuildContext context) {
@@ -231,16 +280,16 @@ class _PromoCard extends StatelessWidget {
             context.pushNamed(Routes.promoDetail, pathParameters: {'id': promo.id}),
         child: GradientSpotlight(
           sunset: promo.spotlight == SpotlightVariant.sunset,
-          // Builder ambil context DI BAWAH GradientSpotlight supaya
-          // DefaultTextStyle.of() melihat warna teks yang sudah di-set.
+          // Read context BELOW GradientSpotlight so DefaultTextStyle.of() sees
+          // the already-set text color.
           child: Builder(
             builder: (context) {
               final onColor = DefaultTextStyle.of(context).style.color ?? Colors.white;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (promo.badge != null)
+                  if (promo.badge != null) ...[
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: KSpace.xs, vertical: 4),
                       decoration: BoxDecoration(
@@ -252,24 +301,25 @@ class _PromoCard extends StatelessWidget {
                         style: text.bodySmall?.copyWith(color: onColor),
                       ),
                     ),
+                    const SizedBox(height: KSpace.sm),
+                  ],
                   Text(
                     promo.title,
                     style: text.bodyLarge?.copyWith(color: onColor, fontWeight: FontWeight.w700),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: KSpace.xs),
                   Text(
                     promo.subtitle,
                     style: text.bodySmall?.copyWith(color: onColor),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    promo.ctaLabel,
-                    style: text.labelMedium?.copyWith(
-                      color: onColor,
-                      decoration: TextDecoration.underline,
-                    ),
+                  const SizedBox(height: KSpace.sm),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: PrimaryPillButton(label: promo.ctaLabel, onPressed: onCta),
                   ),
                 ],
               );
@@ -281,35 +331,38 @@ class _PromoCard extends StatelessWidget {
   }
 }
 
-/// Baris 4 aksi cepat setara — tanpa hierarki, semua ink/surface.
+/// Row of 4 equal quick actions. "Send" is the ink-filled primary; the rest
+/// stay surface1 so accent blue never fills a control.
 class _QuickActionsRow extends StatelessWidget {
-  final VoidCallback onKirim;
-  final VoidCallback onMinta;
+  final VoidCallback onSend;
+  final VoidCallback onRequest;
   final VoidCallback onSplit;
-  final VoidCallback onTerima;
+  final VoidCallback onReceive;
 
   const _QuickActionsRow({
-    required this.onKirim,
-    required this.onMinta,
+    required this.onSend,
+    required this.onRequest,
     required this.onSplit,
-    required this.onTerima,
+    required this.onReceive,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: QuickAction(icon: Icons.arrow_upward, label: 'Kirim', onPressed: onKirim)),
-        Expanded(child: QuickAction(icon: Icons.call_received, label: 'Minta', onPressed: onMinta)),
+        Expanded(
+            child: QuickAction(
+                icon: Icons.arrow_upward, label: 'Send', primary: true, onPressed: onSend)),
+        Expanded(child: QuickAction(icon: Icons.call_received, label: 'Request', onPressed: onRequest)),
         Expanded(child: QuickAction(icon: Icons.call_split, label: 'Split', onPressed: onSplit)),
-        Expanded(child: QuickAction(icon: Icons.arrow_downward, label: 'Terima', onPressed: onTerima)),
+        Expanded(child: QuickAction(icon: Icons.arrow_downward, label: 'Receive', onPressed: onReceive)),
       ],
     );
   }
 }
 
-/// Header "Kirim ke keluarga" + scroll horizontal avatar kontak favorit,
-/// diakhiri tombol lingkaran "+ Tambah".
+/// "Send to family" header + horizontal scroll of favorite contact avatars,
+/// ending in a circular "+ Add" button.
 class _FamilyShortcuts extends StatelessWidget {
   final List<Contact> contacts;
   final ValueChanged<Contact> onContactTap;
@@ -331,10 +384,11 @@ class _FamilyShortcuts extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Kirim ke keluarga', style: text.titleMedium),
-            TextButton(onPressed: onManage, child: const Text('Kelola')),
+            Text('Send to family', style: text.titleMedium),
+            TextButton(onPressed: onManage, child: const Text('Manage')),
           ],
         ),
+        const SizedBox(height: KSpace.md),
         SizedBox(
           height: 92,
           child: ListView(
@@ -419,7 +473,7 @@ class _AddContactShortcut extends StatelessWidget {
               child: Icon(Icons.add, size: 20, color: p.ink),
             ),
             const SizedBox(height: KSpace.xs),
-            Text('Tambah', style: text.bodySmall?.copyWith(color: p.ink)),
+            Text('Add', style: text.bodySmall?.copyWith(color: p.ink)),
           ],
         ),
       ),
@@ -427,7 +481,7 @@ class _AddContactShortcut extends StatelessWidget {
   }
 }
 
-/// Header "Aktivitas terbaru" + hingga 3 transaksi terakhir, atau empty state.
+/// "Recent activity" header + up to 3 latest transactions, or an empty state.
 class _RecentTransactions extends StatelessWidget {
   final List<AppTransaction> transactions;
   final VoidCallback onSeeAll;
@@ -450,15 +504,15 @@ class _RecentTransactions extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Aktivitas terbaru', style: text.titleMedium),
-            TextButton(onPressed: onSeeAll, child: const Text('Lihat semua')),
+            Text('Recent activity', style: text.titleMedium),
+            TextButton(onPressed: onSeeAll, child: const Text('See all')),
           ],
         ),
         if (recent.isEmpty)
           const EmptyView(
             icon: Icons.receipt_long_outlined,
-            title: 'Belum ada transaksi',
-            subtitle: 'Kiriman pertamamu akan muncul di sini.',
+            title: 'No transactions yet',
+            subtitle: 'Your first transfer will show up here.',
           )
         else
           for (final tx in recent)
@@ -477,7 +531,7 @@ class _RecentTransactions extends StatelessWidget {
   }
 }
 
-/// Dua huruf pertama nama, huruf besar — inisial avatar transaksi non-split.
+/// First two letters of the name, uppercase — avatar initials for non-split rows.
 String _initialsOf(String name) {
   final trimmed = name.trim();
   if (trimmed.isEmpty) return '?';
@@ -487,15 +541,15 @@ String _initialsOf(String name) {
 String _directionLabel(TxDirection direction) {
   switch (direction) {
     case TxDirection.send:
-      return 'Terkirim';
+      return 'Sent';
     case TxDirection.receive:
-      return 'Diterima';
+      return 'Received';
     case TxDirection.split:
       return 'Split';
   }
 }
 
-/// "Hari ini HH:mm" untuk transaksi hari yang sama; selain itu "d MMM" lokal id.
+/// "Today HH:mm" for same-day transactions; otherwise "d MMM".
 String _relativeTime(DateTime createdAt) {
   final now = DateTime.now();
   final sameDay =
@@ -503,7 +557,7 @@ String _relativeTime(DateTime createdAt) {
   if (sameDay) {
     final hh = createdAt.hour.toString().padLeft(2, '0');
     final mm = createdAt.minute.toString().padLeft(2, '0');
-    return 'Hari ini $hh:$mm';
+    return 'Today $hh:$mm';
   }
-  return DateFormat('d MMM', 'id').format(createdAt);
+  return DateFormat('d MMM').format(createdAt);
 }
