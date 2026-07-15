@@ -2,6 +2,7 @@ import cors from "cors";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import express, { type Request, type Response } from "express";
+import { Asset } from "@stellar/stellar-sdk";
 
 dotenv.config();
 
@@ -20,8 +21,17 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// SAC USDC address di testnet (derived dari issuer)
-const USDC_SAC_ADDRESS = process.env.USDC_SAC_ADDRESS || "CBQHFCBIFPYBMV7CCMB3Y3I3IDP3UMP3XKZZGQZ2EVTESNQ6H7GNCNC";
+const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
+
+// SAC USDC address di testnet — dihitung dari USDC_ISSUER (SEP-41/CAP-46-6
+// deterministic derivation), bukan hardcode. Hardcode sebelumnya
+// (CBQHFCBIFPYBMV7CCMB3Y3I3IDP3UMP3XKZZGQZ2EVTESNQ6H7GNCNC) TERBUKTI SALAH —
+// tidak cocok dengan derivasi asli dari USDC_ISSUER, jadi transfer selalu
+// akan gagal (memanggil kontrak yang salah). Menghitung ulang di sini
+// mencegah kelas bug ini terulang kalau USDC_ISSUER pernah berubah.
+const USDC_SAC_ADDRESS =
+  process.env.USDC_SAC_ADDRESS ||
+  new Asset("USDC", USDC_ISSUER).contractId(NETWORK_PASSPHRASE);
 
 // ---------------------------------------------------------------------------
 // Static: .well-known files untuk passkey native (iOS & Android)
@@ -206,7 +216,7 @@ app.post("/tx/build", async (req: Request, res: Response) => {
     const { SACClient } = await import("passkey-kit");
     const sacClient = new SACClient({
       rpcUrl: process.env.SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org",
-      networkPassphrase: "Test SDF Network ; September 2015",
+      networkPassphrase: NETWORK_PASSPHRASE,
     });
     const token = sacClient.getSACClient(USDC_SAC_ADDRESS);
 
