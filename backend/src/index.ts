@@ -5,6 +5,7 @@ import express, { type Request, type Response } from "express";
 
 import {
   bridge,
+  fundWalletWithUsdc,
   getKit,
   getServer,
   getUsdcBalance,
@@ -375,7 +376,37 @@ app.get("/wallet/:userId/balance", async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
-// 6) GET /home/:userId/feed
+// 6) POST /wallet/:userId/fund — DEMO ONLY, isi USDC testnet dari funder
+// ---------------------------------------------------------------------------
+// Wallet baru selalu 0 USDC (kita tidak bisa mint, bukan issuer). Endpoint ini
+// transfer dari akun funder (mis. demo-sender) yang SUDAH di-fund manual lewat
+// https://faucet.circle.com/ (pilih Stellar, isi alamat G funder).
+// Butuh env DEMO_FUNDER_SECRET_KEY. Tidak dipanggil otomatis oleh flow lain —
+// panggil manual sekali per wallet demo sebelum sesi demo/testing.
+app.post("/wallet/:userId/fund", async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const { amountUsd } = req.body as { amountUsd?: number };
+
+  const userRecord = store.get(userId);
+  if (!userRecord) {
+    return res.status(404).json({ error: "Wallet not found" });
+  }
+
+  const amount = amountUsd && amountUsd > 0 ? amountUsd : 50;
+
+  try {
+    const result = await fundWalletWithUsdc(userRecord.contractAddress, amount);
+    const balanceUsd = await getUsdcBalance(userRecord.contractAddress);
+    userRecord.balanceUsd = balanceUsd;
+    return res.json({ txHash: result.hash, balanceUsd });
+  } catch (err) {
+    console.error("[wallet/fund] error:", err);
+    return res.status(500).json({ error: "Gagal fund wallet dari funder" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 7) GET /home/:userId/feed
 // ---------------------------------------------------------------------------
 app.get("/home/:userId/feed", async (req: Request, res: Response) => {
   const { userId } = req.params;

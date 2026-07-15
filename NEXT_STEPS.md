@@ -10,6 +10,11 @@ Ikuti urutan di bawah — tiap langkah punya dependency ke langkah sebelumnya.
 >
 > Detail lengkap ada di `SPRINT-TONIGHT.md`.
 
+> **Update (2026-07-16):**
+> - **JANGAN ganti domain Railway ke custom domain** (misal `api.kirimin.app`). RP_ID **sudah di-lock** ke `menantuidaman-stellarapachackathon-production.up.railway.app` — ganti domain = passkey lama tidak bisa dipakai lagi, dan `.well-known` files perlu di-generate ulang semua. Kalau ada checklist yang menyebut "domain custom", **abaikan bagian itu**, kita tetap pakai domain Railway apa adanya.
+> - **Deploy sempat berisiko putus**: commit backend terbaru (nambah contacts/requests/splits + real balance query) mengganti `package-lock.json` jadi `pnpm-lock.yaml`, tapi `Dockerfile` masih pakai `npm ci` — build Railway berikutnya dipastikan gagal. **Sudah diperbaiki & di-push** (Dockerfile sekarang pakai `pnpm@9`, dites lokal: install + build + test semua lolos).
+> - **Wallet baru selalu 0 USDC, solusinya BUKAN `token.mint()`** — kita bukan issuer USDC (`GBBD47IF6...` adalah issuer testnet resmi Circle), jadi mint tidak akan pernah berhasil. Solusi asli: **`POST /wallet/:userId/fund`** (baru ditambahkan) transfer USDC dari akun funder (`demo-sender`) yang sudah di-isi via [faucet.circle.com](https://faucet.circle.com/). Lihat §1b di bawah.
+
 ---
 
 ## 0. Push & deploy (WAJIB PALING AWAL)
@@ -99,6 +104,32 @@ Setelah save, Railway redeploy otomatis. Verifikasi `/health` masih 200.
 - `backend/src/passkey.ts` — `getServer()` sudah membangun `relayer: { baseUrl, apiKey }` dengan benar dari env vars ini.
 
 **Menyelesaikan:** prasyarat mutlak untuk S1-05, S2-01, S2-02 — tanpa ini, onboarding maupun kirim uang tidak akan pernah benar-benar berhasil on-chain.
+
+---
+
+## 1b. Isi wallet demo dengan USDC testnet (pakai `POST /wallet/:userId/fund`)
+
+**Kenapa `token.mint()` tidak dipakai:** `USDC_ISSUER` (`GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`) adalah **issuer testnet resmi Circle** — kita tidak punya secret key-nya, jadi `mint()` akan selalu gagal (butuh otoritas issuer). Solusinya: transfer dari akun yang **sudah** punya saldo USDC ke wallet baru.
+
+**Langkah:**
+
+1. Buka [faucet.circle.com](https://faucet.circle.com/) (gratis, tanpa akun, instan) → pilih network **Stellar** → isi alamat G dari `demo-sender` (lihat `sprint/CONFIG.md` § Stellar Testnet — "Demo Sender Public Key") → klik **Get Tokens**.
+2. Isi env var baru di Railway:
+   ```
+   DEMO_FUNDER_SECRET_KEY=<secret key demo-sender, dari sprint/SECRETS.md>
+   ```
+3. Setelah wallet demo dibuat (via onboarding di app), panggil endpoint baru untuk isi saldo:
+   ```bash
+   curl -X POST https://menantuidaman-stellarapachackathon-production.up.railway.app/wallet/<userId>/fund \
+     -H "Content-Type: application/json" \
+     -d '{"amountUsd": 50}'
+   ```
+   `userId` didapat dari response `/wallet/create` (atau log Railway).
+4. Verifikasi: `GET /wallet/<userId>/balance` harus mengembalikan `balanceUsd` sesuai jumlah yang di-fund.
+
+**Catatan:** endpoint ini **tidak dipanggil otomatis** oleh flow onboarding/send manapun — sengaja manual, supaya tidak ada transaksi tak terduga saat demo. Kode sudah `tsc`-clean dan dites logic-nya terhadap tipe SDK asli (`AssembledTransaction.signAndSend()`, `basicNodeSigner`), tapi **belum pernah dieksekusi live** (butuh secret key asli yang tidak saya pegang) — jadi jalankan sekali dulu di luar jam demo untuk pastikan jalan sebelum diandalkan.
+
+**Menyelesaikan:** task #2 di daftar prioritas ("Funding Wallet Testnet dengan USDC").
 
 ---
 

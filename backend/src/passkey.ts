@@ -142,6 +142,48 @@ export async function getUsdcToken() {
   return _usdcToken;
 }
 
+/**
+ * Kirim USDC testnet dari akun "funder" (classic G-address, biasanya
+ * demo-sender) ke wallet Passkey Kit (contract C-address) manapun.
+ *
+ * PENTING: kita TIDAK memegang secret key issuer USDC (USDC_ISSUER di bawah
+ * adalah issuer testnet resmi Circle, bukan milik kita) — jadi tidak bisa
+ * `token.mint()`. Funder harus akun yang SUDAH punya saldo USDC asli, isi
+ * lewat https://faucet.circle.com/ (pilih Stellar, alamat G-address funder).
+ *
+ * Beda dari alur passkey (kit.sign() + srv.send()): funder di sini pakai
+ * classic keypair (bukan WebAuthn), jadi ditandatangani langsung dengan
+ * basicNodeSigner + Keypair.fromSecret, lalu signAndSend() — tidak lewat
+ * PasskeyServer/relayer sama sekali (funder bayar fee sendiri dari XLM-nya).
+ */
+export async function fundWalletWithUsdc(
+  toContractAddress: string,
+  amountUsd: number
+): Promise<{ hash: string }> {
+  const funderSecret = process.env.DEMO_FUNDER_SECRET_KEY;
+  if (!funderSecret) {
+    throw new Error("DEMO_FUNDER_SECRET_KEY belum diisi di env — tidak ada sumber dana USDC");
+  }
+
+  const { Keypair } = await import("@stellar/stellar-sdk");
+  const { basicNodeSigner } = await import("@stellar/stellar-sdk/contract");
+  const funder = Keypair.fromSecret(funderSecret);
+  const { signTransaction } = basicNodeSigner(funder, NETWORK_PASSPHRASE);
+
+  const token = await getUsdcToken();
+  const amountStroops = BigInt(Math.round(amountUsd * 10_000_000));
+
+  const tx = await token.transfer({
+    from: funder.publicKey(),
+    to: toContractAddress,
+    amount: amountStroops,
+  });
+
+  const sent = await tx.signAndSend({ signTransaction });
+  const hash = sent.sendTransactionResponse?.hash ?? "";
+  return { hash };
+}
+
 export async function getUsdcBalance(contractAddress: string): Promise<number> {
   try {
     const token = await getUsdcToken();
