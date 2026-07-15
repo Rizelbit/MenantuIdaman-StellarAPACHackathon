@@ -100,7 +100,8 @@ class SplitController extends Notifier<SplitState> {
     );
   }
 
-  Future<void> submit() async {
+  /// Returns null on success, or an [AppFailure] the screen can surface.
+  Future<AppFailure?> submit() async {
     final api = ref.read(walletApiProvider);
     switch (await api.createSplit(
       title: state.title,
@@ -108,9 +109,9 @@ class SplitController extends Notifier<SplitState> {
       participants: state.participants,
     )) {
       case Ok():
-        break; // success; created bill surfaced by split detail via getSplit later
-      case Err():
-        break; // surface failure later (mock always Ok)
+        return null; // created bill surfaced by split detail via getSplit
+      case Err(failure: final f):
+        return f;
     }
   }
 
