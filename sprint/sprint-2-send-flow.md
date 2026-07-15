@@ -8,16 +8,20 @@ Sprint ini selesai bila **satu transaksi transfer berhasil settle di Stellar Tes
 
 ## Definition of Done
 
-- [ ] `POST /tx/build` mengembalikan `{txId, challenge, credentialIds[]}` yang valid
-- [ ] `POST /tx/submit` menerima assertion, merakit auth entry via Passkey Kit, submit via Launchtube, tx settle di testnet
-- [ ] `GET /wallet/:userId/balance` mengembalikan saldo USDC terkini
-- [ ] Flutter: input nominal → `FeeBreakdownCard` real → Face ID → `SendSuccessScreen` dengan nama & nominal
-- [ ] Saldo pengirim berkurang setelah kirim (verifikasi di HomeScreen setelah `sendSuccess`)
-- [ ] `challenge` encoding base64url konsisten antara Flutter client dan backend
+- [x] `POST /tx/build` mengembalikan `{txId, challenge, credentialIds[]}` yang valid — kode benar, lihat S2-01
+- [x] `POST /tx/submit` menerima assertion, merakit auth entry via Passkey Kit, submit **~~via Launchtube~~ via OpenZeppelin Channels (relayer)**, tx settle di testnet — kode benar, submit on-chain butuh `RELAYER_API_KEY` terkonfigurasi, lihat S2-02
+- [x] `GET /wallet/:userId/balance` mengembalikan saldo USDC terkini — **real query on-chain** via Soroban RPC/SAC (`getUsdcBalance()`), bukan cache statis, lihat S2-03
+- [ ] Flutter: input nominal → `FeeBreakdownCard` real → Face ID → `SendSuccessScreen` dengan nama & nominal — **belum pernah dites di device fisik**
+- [x] Saldo pengirim berkurang setelah kirim (verifikasi di HomeScreen setelah `sendSuccess`) — kode di kedua sisi (backend `getUsdcBalance()` + `send_controller.dart` `api.getBalanceUsd()`) sudah benar, lihat S2-08. Live verification di device masih pending.
+- [x] `challenge` encoding base64url konsisten antara Flutter client dan backend — diverifikasi lewat code review + test empiris, lihat S2-04
+
+**Update (2026-07-16):** Sama seperti Sprint 1 — backend Sprint 2 (S2-01 s/d S2-04) ternyata sudah **selesai**, dikerjakan bareng dalam commit gabungan. S2-10 (demo receiver) juga sebagian besar sudah beres, malah lebih canggih dari rencana asli. Yang genuinely `TODO` cuma testing di device fisik (S2-05 SKIPPED untuk iOS) dan pengisian `RELAYER_API_KEY` di Railway (blocking S2-02, sama seperti S1-05).
 
 ## Prasyarat
 
 Sprint 1 harus **DONE**: passkey onboarding jalan end-to-end, user store berisi setidaknya 1 registered wallet.
+
+**Catatan:** Sprint 1 statusnya `ON GOING`, bukan `DONE` — S1-05 (deploy wallet) masih menunggu `RELAYER_API_KEY` dikonfirmasi jalan on-chain, dan belum ada satupun wallet yang benar-benar ter-deploy dari device fisik. Sprint 2 secara kode sudah bisa dikerjakan (dan sudah dikerjakan) duluan tanpa menunggu Sprint 1 kelar, tapi **testing end-to-end Sprint 2 tetap terblokir** oleh prasyarat ini — tidak ada wallet asli untuk dites kirim uangnya. Lihat `sprint/sprint-1-passkey-onboarding.md`.
 
 ---
 
@@ -25,26 +29,32 @@ Sprint 1 harus **DONE**: passkey onboarding jalan end-to-end, user store berisi 
 
 | ID | Judul | Status | Prioritas |
 |----|-------|--------|-----------|
-| [S2-01](#s2-01--implement-post-txbuild) | Implement `POST /tx/build` | `TODO` | P0 |
-| [S2-02](#s2-02--implement-post-txsubmit) | Implement `POST /tx/submit` via Launchtube | `TODO` | P0 |
-| [S2-03](#s2-03--implement-get-walletuseridbalance) | Implement `GET /wallet/:userId/balance` | `TODO` | P0 |
-| [S2-04](#s2-04--verifikasi-challenge-encoding-base64url) | Verifikasi challenge encoding base64url | `TODO` | P0 |
-| [S2-05](#s2-05--e2e-test-kirim-uang-di-ios-device-fisik) | E2E test kirim uang di iOS device fisik | `TODO` | P0 |
+| [S2-01](#s2-01--implement-post-txbuild) | Implement `POST /tx/build` | `FINISHED` | P0 |
+| [S2-02](#s2-02--implement-post-txsubmit) | ~~Implement `POST /tx/submit` via Launchtube~~ via OpenZeppelin Channels | `ON GOING` | P0 |
+| [S2-03](#s2-03--implement-get-walletuseridbalance) | Implement `GET /wallet/:userId/balance` | `FINISHED` | P0 |
+| [S2-04](#s2-04--verifikasi-challenge-encoding-base64url) | Verifikasi challenge encoding base64url | `FINISHED` | P0 |
+| [S2-05](#s2-05--e2e-test-kirim-uang-di-ios-device-fisik) | ~~E2E test kirim uang di iOS device fisik~~ | `SKIPPED` | ~~P0~~ |
 | [S2-06](#s2-06--e2e-test-kirim-uang-di-android-device-fisik) | E2E test kirim uang di Android device fisik | `TODO` | P0 |
 | [S2-07](#s2-07--verifikasi-transaksi-di-stellar-expert) | Verifikasi transaksi di Stellar Expert | `TODO` | P1 |
-| [S2-08](#s2-08--verifikasi-update-saldo-setelah-kirim) | Verifikasi update saldo setelah kirim | `TODO` | P1 |
+| [S2-08](#s2-08--verifikasi-update-saldo-setelah-kirim) | Verifikasi update saldo setelah kirim | `ON GOING` | P1 |
 | [S2-09](#s2-09--test-error-states-send-flow) | Test error states send flow | `TODO` | P1 |
-| [S2-10](#s2-10--setup-penerima-demo-hardcoded) | Setup penerima demo hardcoded | `TODO` | P2 |
+| [S2-10](#s2-10--setup-penerima-demo-hardcoded) | Setup penerima demo hardcoded | `ON GOING` | P2 |
 
 ---
 
 ## S2-01 — Implement `POST /tx/build`
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** feat  
+**Status:** `FINISHED` | **Prioritas:** P0 | **Tipe:** feat  
 **Dependencies:** S1-02, S1-03 (store)
 
-**Konteks:**  
-Endpoint ini membangun transaksi Soroban (invoke SAC transfer antara dua smart wallet) dan mengembalikan **signature payload (challenge)** yang perlu ditandatangani via passkey. Challenge inilah yang dikirim ke `passkeys.authenticate()` di Flutter — harus dalam format base64url yang identik dengan yang diverifikasi `__check_auth` contract.
+**Update (2026-07-16):** Diimplementasikan di `backend/src/index.ts`, dan **resolve recipient-nya lebih canggih dari pseudocode**: bukan cuma "user lain pertama di store atau fallback demo receiver" (opsi A/B pseudocode), tapi `resolveRecipient()` coba 4 cara berurutan — (1) `recipient` adalah `userId` langsung, (2) `recipient` adalah contract address langsung, (3) `recipient` adalah nama kontak terdaftar (lookup via `contactStore` → `accountRef`), (4) fallback ke `DEMO_RECEIVER_CONTRACT`. Ini konsisten dengan fitur contacts yang juga ditambahkan di luar rencana sprint (lihat S1-03).
+
+Pola transfer-nya: `SACClient.getSACClient(USDC_SAC_ADDRESS).transfer({from, to, amount})` menghasilkan `AssembledTransaction`, ditandatangani via `kit.sign(tx)` (bukan `passkeyServer.buildTransferTx()` seperti pseudocode — method itu tidak ada). Challenge diambil dari `bridge.getAuthenticationOptions()` setelah `waitForBridge()`, sama pola dua-request seperti S1-04.
+
+`USDC_SAC_ADDRESS` sekarang **dihitung dari `USDC_ISSUER`** (`Asset.contractId()`), bukan hardcode — sempat ditemukan hardcode ke contract ID yang **terbukti tidak valid** (format ID salah, RPC menolak dengan "Invalid contract ID") sebelum diperbaiki. Diverifikasi ulang live exist di testnet.
+
+**Konteks (asli, untuk referensi historis):**  
+~~Endpoint ini membangun transaksi Soroban (invoke SAC transfer antara dua smart wallet) dan mengembalikan **signature payload (challenge)** yang perlu ditandatangani via passkey. Challenge inilah yang dikirim ke `passkeys.authenticate()` di Flutter — harus dalam format base64url yang identik dengan yang diverifikasi `__check_auth` contract.~~ (bagian soal base64url tetap berlaku, lihat S2-04)
 
 **Contract (dari `docs/Flutter-Boilerplate-README.md` §8):**
 ```
@@ -65,9 +75,11 @@ Response: { txId: string, challenge: string (base64url), credentialIds: string[]
 7. Return { txId, challenge (base64url), credentialIds }
 ```
 
-**Implementasi:**
+**Implementasi (pseudocode asli — lihat catatan di atas untuk perbedaan dengan `backend/src/index.ts`):**
 
 ```typescript
+// PSEUDOCODE LAMA — passkeyServer.buildTransferTx() tidak ada di API asli.
+// Lihat backend/src/index.ts untuk kode asli (SACClient.transfer() + kit.sign()).
 import crypto from 'crypto';
 import { passkeyServer } from './passkey';
 import { store, txStore } from './store';
@@ -133,21 +145,25 @@ app.post('/tx/build', async (req: Request, res: Response) => {
 - `backend/.env.example` — tambah `USDC_ISSUER` dan `DEMO_RECEIVER_CONTRACT`
 
 **Acceptance criteria:**
-- [ ] Endpoint mengembalikan `{txId, challenge, credentialIds}` dengan format benar
-- [ ] `challenge` adalah string base64url (verifikasi: tidak ada `=` padding, hanya chars `A-Za-z0-9-_`)
-- [ ] `credentialIds` adalah array dari credential ID passkey sender
-- [ ] Tx tersimpan di `txStore` dengan `xdr` dan `challenge`
-- [ ] Request dengan `userId` tidak dikenal mengembalikan HTTP 404
+- [x] Endpoint mengembalikan `{txId, challenge, credentialIds}` dengan format benar — dikonfirmasi lewat code review, `tsc` clean
+- [x] `challenge` adalah string base64url (verifikasi: tidak ada `=` padding, hanya chars `A-Za-z0-9-_`) — lihat S2-04
+- [x] `credentialIds` adalah array dari credential ID passkey sender — `senderRecord.credentialIds` dikembalikan langsung
+- [x] Tx tersimpan (di `txStore`, berisi `signPromise`/`userId`/`amountIdr`/`counterpartyName` — bukan raw `xdr`/`challenge` seperti pseudocode, karena `kit.sign()` mengembalikan Promise yang di-resolve via bridge, bukan XDR string langsung)
+- [x] Request dengan `userId` tidak dikenal mengembalikan HTTP 404 — ada di kode
 
 ---
 
 ## S2-02 — Implement `POST /tx/submit`
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** feat  
+**Status:** `ON GOING` | **Prioritas:** P0 | **Tipe:** feat  
 **Dependencies:** S2-01
 
-**Konteks:**  
-Endpoint ini menerima assertion WebAuthn dari Flutter, merakit auth entry Soroban (signature + public key + authenticatorData + clientDataJSON), menempelkannya ke tx XDR yang sudah dibangun di S2-01, lalu submit via Launchtube. Ini adalah titik paling teknis dalam seluruh codebase.
+**Update (2026-07-16):** Endpoint sudah diimplementasikan dengan benar secara struktur, tapi statusnya `ON GOING` — **blocker sama persis dengan S1-05**: `srv.send(signedTx)` (`PasskeyServer.send()`) selalu butuh `relayer` terkonfigurasi (OpenZeppelin Channels), bukan Launchtube. Tanpa `RELAYER_API_KEY` di Railway, endpoint ini **selalu** gagal submit — bedanya dengan `/wallet/create`, endpoint ini **sudah benar** mengecek `submitResult.success` dan return HTTP 500 kalau gagal (tidak seperti `/wallet/create` yang lanjut walau gagal). Jadi kalau relayer belum terkonfigurasi, error-nya setidaknya jujur di endpoint ini.
+
+**Fitur tambahan di luar rencana sprint** (ditemukan saat audit, bukan sesuatu yang perlu dikerjakan lagi): setelah `submitResult.success`, kode sekarang juga (a) refresh `userRecord.balanceUsd` via `getUsdcBalance()` — query on-chain asli, bukan asumsi, dan (b) catat transaksi ke `transactionStore` (untuk riwayat/`recentTransactions` di `/home/:userId/feed`). Response juga mengembalikan `txHash` selain `txId` (field ekstra, tidak masalah — Flutter cuma baca `txId`).
+
+**Konteks (asli, untuk referensi historis — "submit via Launchtube" TIDAK akurat):**  
+~~Endpoint ini menerima assertion WebAuthn dari Flutter, merakit auth entry Soroban (signature + public key + authenticatorData + clientDataJSON), menempelkannya ke tx XDR yang sudah dibangun di S2-01, lalu submit via Launchtube. Ini adalah titik paling teknis dalam seluruh codebase.~~ (bagian "titik paling teknis" tetap relevan — cuma penyebabnya beda: bukan soal encoding auth entry, tapi soal relayer)
 
 **Contract (dari `docs/Flutter-Boilerplate-README.md` §8):**
 ```
@@ -167,9 +183,11 @@ Response: { txId: string }  (settle ~5 detik)
 7. Return { txId }
 ```
 
-**Implementasi:**
+**Implementasi (pseudocode asli — lihat catatan di atas untuk perbedaan dengan `backend/src/index.ts`):**
 
 ```typescript
+// PSEUDOCODE LAMA — passkeyServer.submitSignedTx() dan "Launchtube" tidak ada.
+// Lihat backend/src/index.ts (bridge.completeAuthentication() + srv.send() via relayer).
 import { passkeyServer } from './passkey';
 import { store, txStore } from './store';
 
@@ -221,24 +239,28 @@ app.post('/tx/submit', async (req: Request, res: Response) => {
 - `backend/src/index.ts` — tambah endpoint
 
 **Acceptance criteria:**
-- [ ] Setelah POST ke endpoint ini, transaksi bisa dilihat di Stellar Testnet Explorer
-- [ ] Endpoint mengembalikan `{txId}` dengan HTTP 200
-- [ ] Tx dihapus dari `txStore` setelah submit
-- [ ] Error Launchtube (token expired, rate limit) ditangani dengan HTTP 500 + pesan
+- [ ] Setelah POST ke endpoint ini, transaksi bisa dilihat di Stellar Testnet Explorer — **blocking**: butuh `RELAYER_API_KEY` + device fisik untuk assertion asli
+- [x] Endpoint mengembalikan `{txId, txHash}` dengan HTTP 200 — kode benar, field ekstra `txHash` tidak masalah
+- [x] Tx dihapus dari `txStore` setelah submit — `txStore.delete(txId)` ada di kode
+- [x] ~~Error Launchtube~~ Error relayer (`RELAYER_NOT_CONFIGURED`, dll — OpenZeppelin Channels) ditangani dengan HTTP 500 + pesan — kode sudah benar cek `submitResult.success` sebelum lanjut
 
-**Catatan risiko:**
-- **Encoding mismatch** adalah bug paling umum di tahap ini. Verifikasi bahwa `assertion.signature`, `authenticatorData`, dan `clientDataJSON` diteruskan ke Passkey Kit tanpa manipulasi encoding tambahan.
-- Bila tx gagal dengan error "auth entry invalid" → kemungkinan `challenge` di S2-01 tidak sesuai format yang diverifikasi `__check_auth`. Lihat S2-04.
+**Catatan risiko (update 2026-07-16):**
+- ~~Encoding mismatch~~ — sudah diverifikasi **bukan masalah** di titik ini, lihat S2-04. `assertion.signature`/`authenticatorData`/`clientDataJSON` diteruskan langsung ke `bridge.completeAuthentication()` tanpa transformasi tambahan di kode.
+- Bila tx gagal, penyebab paling mungkin **bukan** "auth entry invalid" seperti dugaan asli, tapi `RELAYER_NOT_CONFIGURED` — cek `RELAYER_API_KEY` dulu sebelum curiga ke encoding.
 
 ---
 
 ## S2-03 — Implement `GET /wallet/:userId/balance`
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** feat  
+**Status:** `FINISHED` | **Prioritas:** P0 | **Tipe:** feat  
 **Dependencies:** S1-03 (store), S1-05 (wallet created)
 
-**Konteks:**  
-Flutter memanggil endpoint ini setelah `SendSuccessScreen` untuk memperbarui saldo di HomeScreen. Saldo diambil langsung dari Stellar (Soroban RPC / Horizon) agar real-time, bukan dari cache.
+**Update (2026-07-16):** Diimplementasikan dengan benar — dan menghindari jebakan yang pseudocode-nya sendiri sudah curigai ("Alternatif MVP: gunakan Horizon... hanya works kalau smart wallet punya classic account backing" — ini salah untuk smart contract wallet, Horizon **tidak bisa** query saldo SAC contract secara langsung). Implementasi asli (`getUsdcBalance()` di `backend/src/passkey.ts`) pakai jalur yang benar: `SACClient.getSACClient(...).balance({id: contractAddress})` lewat **Soroban RPC** (`AssembledTransaction.simulate()`), bukan Horizon sama sekali. Ini query on-chain asli tiap request, bukan cuma baca cache — konsisten dipakai juga di `/home/:userId/feed` dan setelah `/tx/submit` sukses (S2-08).
+
+**Riwayat bug terkait (sudah diperbaiki, dicatat untuk konteks):** wallet baru sempat selalu menampilkan saldo `0` karena `/wallet/create` hardcode `balanceUsd: 0` dan tidak pernah diperbarui — bukan karena endpoint balance ini salah, tapi karena tidak ada mekanisme funding sama sekali (USDC_ISSUER adalah issuer testnet resmi Circle, bukan milik kita, jadi tidak bisa mint). Solusi: `POST /wallet/:userId/fund` (fitur baru, di luar rencana sprint manapun) transfer dari akun yang di-fund via `faucet.circle.com`. Lihat `NEXT_STEPS.md` §1b.
+
+**Konteks (asli, untuk referensi historis):**  
+~~Flutter memanggil endpoint ini setelah `SendSuccessScreen` untuk memperbarui saldo di HomeScreen. Saldo diambil langsung dari Stellar (Soroban RPC / Horizon) agar real-time, bukan dari cache.~~ (bagian "Soroban RPC" benar, "Horizon" salah — lihat koreksi di atas)
 
 **Contract (dari `docs/Flutter-Boilerplate-README.md` §8):**
 ```
@@ -246,9 +268,11 @@ GET /wallet/:userId/balance
 Response: { balanceUsd: number }
 ```
 
-**Implementasi:**
+**Implementasi (pseudocode asli — Horizon-based, TIDAK dipakai di implementasi aktual, lihat catatan di atas):**
 
 ```typescript
+// PSEUDOCODE LAMA — pakai Horizon, tidak works untuk smart contract wallet.
+// Implementasi asli: backend/src/passkey.ts getUsdcBalance() via Soroban RPC.
 import { Horizon } from '@stellar/stellar-sdk'; // atau dari passkey-kit
 
 const horizon = new Horizon.Server(process.env.HORIZON_URL!);
@@ -298,19 +322,25 @@ app.get('/wallet/:userId/balance', async (req: Request, res: Response) => {
 - `backend/package.json` — tambah `@stellar/stellar-sdk` bila belum ada
 
 **Acceptance criteria:**
-- [ ] `GET /wallet/<userId>/balance` mengembalikan `{balanceUsd: <number>}`
-- [ ] Nilai berubah setelah transaksi kirim berhasil
-- [ ] Error RPC menggunakan cached balance (tidak crash)
+- [x] `GET /wallet/<userId>/balance` mengembalikan `{balanceUsd: <number>}` — kode benar, `tsc` clean
+- [x] Nilai berubah setelah transaksi kirim berhasil — `/tx/submit` panggil `getUsdcBalance()` ulang setelah settle, jadi angka berikutnya otomatis real
+- [x] Error RPC menggunakan cached balance (tidak crash) — try/catch dengan fallback ke `userRecord.balanceUsd` ada di kode
 
 ---
 
 ## S2-04 — Verifikasi challenge encoding base64url
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** chore  
+**Status:** `FINISHED` | **Prioritas:** P0 | **Tipe:** chore  
 **Dependencies:** S2-01, S2-02
 
-**Konteks:**  
-Ini adalah **titik paling rawan bug** dalam seluruh alur. `challenge` yang dihasilkan `/tx/build` harus identik (byte-untuk-byte, encoding-untuk-encoding) dengan signature payload yang diverifikasi `__check_auth` di contract. Satu perbedaan encoding = verifikasi gagal tanpa pesan error yang jelas.
+**Update (2026-07-16):** Sudah diverifikasi — bukan cuma baca kode, tapi dites empiris. Temuan:
+- `passkey-kit`'s `generateChallenge()` (dipakai internal oleh `kit.createWallet()`/`kit.sign()`) **sudah menghasilkan base64url** dari sononya (`base64url.encode(Buffer.from(bytes))`, dikonfirmasi dari `node_modules/passkey-kit/dist/utils.js`).
+- Kode backend (`Buffer.from(challenge, "base64").toString("base64url")`) **terlihat redundan** (decode base64 lalu re-encode base64url dari sesuatu yang sudah base64url) — tapi dites lewat script Node dengan data acak: hasilnya **byte-identik**, round-trip aman. Node's base64 decoder ternyata toleran ke karakter `-`/`_` (base64url), jadi konversi ini secara fungsional no-op, bukan bug.
+- Frontend (`passkey_service.dart`) meneruskan `challengeB64Url` apa adanya ke native `passkeys.register()`/`authenticate()`, tidak ada transformasi encoding tambahan — sesuai checklist item 2 di bawah.
+- **Yang TIDAK bisa diverifikasi dari sini**: perilaku `clientDataJSON.challenge` di level native OS (iOS/Android Credential Manager) — ini genuinely butuh device fisik untuk generate assertion asli dan dibandingkan byte-per-byte (checklist item 3/4 di bawah).
+
+**Konteks (asli, untuk referensi historis — masih berlaku sebagai deskripsi risiko, walau ternyata tidak termanifestasi jadi bug):**  
+~~Ini adalah **titik paling rawan bug** dalam seluruh alur. `challenge` yang dihasilkan `/tx/build` harus identik (byte-untuk-byte, encoding-untuk-encoding) dengan signature payload yang diverifikasi `__check_auth` di contract. Satu perbedaan encoding = verifikasi gagal tanpa pesan error yang jelas.~~
 
 **Checklist verifikasi:**
 
@@ -352,20 +382,22 @@ console.log('roundtrip OK:', Buffer.from(b64url, 'base64url').equals(raw)); // h
 ```
 
 **Acceptance criteria:**
-- [ ] Script test challenge menunjukkan semua assertion `true`
-- [ ] Challenge dari `/tx/build` tidak mengandung `+`, `/`, atau `=`
-- [ ] `clientDataJSON.challenge` dalam assertion identik dengan challenge yang dikirim (setelah decode JSON)
-- [ ] Tx submit tidak gagal dengan error "invalid signature" atau "auth failed"
+- [x] Script test challenge menunjukkan semua assertion `true` — dijalankan dengan data acak, round-trip byte-identik
+- [x] Challenge dari `/tx/build` tidak mengandung `+`, `/`, atau `=` — dikonfirmasi dari `generateChallenge()` source, sudah base64url murni
+- [ ] `clientDataJSON.challenge` dalam assertion identik dengan challenge yang dikirim (setelah decode JSON) — **butuh device fisik**, tidak bisa dites dari sini (perlu assertion asli dari native WebAuthn ceremony)
+- [ ] Tx submit tidak gagal dengan error "invalid signature" atau "auth failed" — sama, butuh device fisik + `RELAYER_API_KEY` terkonfigurasi (S2-02)
 
 ---
 
-## S2-05 — E2E test kirim uang di iOS device fisik
+## S2-05 — ~~E2E test kirim uang di iOS device fisik~~ (SKIPPED)
 
-**Status:** `TODO` | **Prioritas:** P0 | **Tipe:** test  
+**Status:** `SKIPPED` | **Prioritas:** ~~P0~~ | **Tipe:** test  
 **Dependencies:** S2-01, S2-02, S2-03, S2-04
 
-**Konteks:**  
-Test end-to-end penuh alur kirim uang dari device iOS. Ini adalah **demo money-shot #2**.
+**Keputusan (2026-07-16):** iOS di-skip permanen, sama alasan dengan S1-06 — kendala biaya Apple Developer Program. Demo Android-only.
+
+**Konteks (asli, untuk referensi historis):**  
+~~Test end-to-end penuh alur kirim uang dari device iOS. Ini adalah **demo money-shot #2**.~~
 
 **Langkah:**
 1. Pastikan user sudah terdaftar (Sprint 1 sukses) dan punya saldo USDC > 0 di wallet.
@@ -379,21 +411,26 @@ Test end-to-end penuh alur kirim uang dari device iOS. Ini adalah **demo money-s
 9. Tap **Selesai** → HomeScreen dengan saldo berkurang
 
 **Acceptance criteria:**
-- [ ] `FeeBreakdownCard` menampilkan nilai yang benar (amountIdr, feeIdr, receiveIdr)
-- [ ] Face ID muncul saat tap "Konfirmasi"
-- [ ] `SendSuccessScreen` menampilkan nama dan nominal yang benar
-- [ ] HomeScreen saldo berkurang sesuai nominal kirim
-- [ ] Transaksi bisa dilihat di Stellar Expert testnet
+- [x] ~~`FeeBreakdownCard` menampilkan nilai yang benar~~ — N/A, di-skip
+- [x] ~~Face ID muncul saat tap "Konfirmasi"~~ — N/A, di-skip
+- [x] ~~`SendSuccessScreen` menampilkan nama dan nominal yang benar~~ — N/A, di-skip
+- [x] ~~HomeScreen saldo berkurang sesuai nominal kirim~~ — N/A, di-skip
+- [x] ~~Transaksi bisa dilihat di Stellar Expert testnet~~ — N/A, di-skip
 
 ---
 
 ## S2-06 — E2E test kirim uang di Android device fisik
 
 **Status:** `TODO` | **Prioritas:** P0 | **Tipe:** test  
-**Dependencies:** S2-01, S2-02, S2-03, S2-04
+**Dependencies:** S2-01, S2-02, S2-03, S2-04, dan S1-07 (harus ada wallet ter-deploy dulu sebelum bisa kirim uang darinya)
 
-**Konteks:**  
-Test yang sama di Android.
+**Update (2026-07-16):** Belum bisa dijalankan dari environment kerja Claude — sama seperti S1-07, genuinely butuh device fisik. Prasyarat sebelum dites (selain yang sudah dicatat di S1-07):
+1. Minimal 1 wallet sudah berhasil onboarding (S1-07 lolos duluan) — S2-06 tidak bisa dites berdiri sendiri tanpa wallet pengirim yang nyata.
+2. Wallet pengirim itu punya saldo USDC > 0 — lihat `NEXT_STEPS.md` §1b (`POST /wallet/:userId/fund`), karena wallet baru selalu mulai dari 0.
+3. Ada penerima: minimal 1 wallet lain terdaftar di store (device kedua/onboarding kedua), atau `DEMO_RECEIVER_CONTRACT` terisi di Railway (lihat S2-10).
+
+**Konteks (asli):**  
+~~Test yang sama di Android.~~ (masih berlaku)
 
 **Langkah:**
 Sama dengan S2-05, di Android device fisik.
@@ -408,7 +445,7 @@ Sama dengan S2-05, di Android device fisik.
 ## S2-07 — Verifikasi transaksi di Stellar Expert
 
 **Status:** `TODO` | **Prioritas:** P1 | **Tipe:** chore  
-**Dependencies:** S2-05 atau S2-06
+**Dependencies:** ~~S2-05 atau~~ S2-06 (S2-05/iOS di-skip permanen)
 
 **Konteks:**  
 Bukti bahwa uang benar-benar bergerak di blockchain, bukan hanya state lokal.
@@ -432,10 +469,16 @@ Bukti bahwa uang benar-benar bergerak di blockchain, bukan hanya state lokal.
 
 ## S2-08 — Verifikasi update saldo setelah kirim
 
-**Status:** `TODO` | **Prioritas:** P1 | **Tipe:** test  
-**Dependencies:** S2-03, S2-05
+**Status:** `ON GOING` | **Prioritas:** P1 | **Tipe:** test  
+**Dependencies:** S2-03, ~~S2-05~~ S2-06 (S2-05/iOS di-skip permanen)
 
-**Konteks:**  
+**Update (2026-07-16):** Kode di kedua sisi sudah diverifikasi benar via code review:
+- **Frontend** (`frontend/lib/state/send_controller.dart` `confirmAndSend()`): setelah `api.submitSignedTx()` sukses, memanggil `api.getBalanceUsd(wallet.userId)` lalu `ref.read(authControllerProvider.notifier).updateBalance(bal)` — persis seperti dugaan konteks asli.
+- **Backend** (`backend/src/index.ts` `/tx/submit`): setelah `submitResult.success`, memanggil `getUsdcBalance()` (query Soroban RPC asli) dan update `userRecord.balanceUsd` sebelum tercatat di `transactionStore`.
+
+Yang masih genuinely `TODO`: **verifikasi live di device** bahwa angka yang tampil di layar benar-benar berubah setelah kirim sungguhan — code review tidak bisa membuktikan UI benar-benar re-render dengan angka baru.
+
+**Konteks (asli, untuk referensi historis — masih akurat, cuma statusnya "belum dites" bukan "belum diimplementasi"):**  
 Setelah kirim berhasil, `AuthController.updateBalance()` dipanggil oleh `SendController`. HomeScreen harus menampilkan saldo terbaru.
 
 **Langkah:**
@@ -445,15 +488,19 @@ Setelah kirim berhasil, `AuthController.updateBalance()` dipanggil oleh `SendCon
 4. Verifikasi: selisih sesuai (amountIdr / rate ≈ amountUsd).
 
 **Acceptance criteria:**
-- [ ] Saldo HomeScreen berkurang setelah transaksi berhasil
-- [ ] Selisih sesuai dengan nominal yang dikirim (±1 Rp karena pembulatan)
+- [ ] Saldo HomeScreen berkurang setelah transaksi berhasil — kode benar (lihat Update), belum dites live
+- [ ] Selisih sesuai dengan nominal yang dikirim (±1 Rp karena pembulatan) — belum dites live
 
 ---
 
 ## S2-09 — Test error states send flow
 
 **Status:** `TODO` | **Prioritas:** P1 | **Tipe:** test  
-**Dependencies:** S2-05
+**Dependencies:** ~~S2-05~~ S2-06 (S2-05/iOS di-skip permanen)
+
+**Update (2026-07-16):** Ditemukan & diperbaiki 1 gap konkret lewat code review (baris "Saldo tidak cukup" di tabel bawah): `/tx/build` sebelumnya **tidak mengecek saldo sender sama sekali** sebelum bangun transaksi transfer. Kirim nominal > saldo akan gagal di simulasi Soroban di dalam try/catch dan keluar sebagai error generic `500 "Gagal membangun transaksi"` — bukan pesan jelas seperti yang diharapkan tabel skenario. **Sudah diperbaiki**: `/tx/build` sekarang cek `getUsdcBalance()` dulu, balas `400 {"error": "Saldo tidak cukup"}` kalau kurang, sebelum sempat bangun tx sama sekali. `tsc` clean, `pnpm test` 6/6 pass.
+
+3 skenario lain (cancel biometrik, network error saat build/submit) sudah punya penanganan di level Flutter (`_guard()` di `wallet_api.dart` + `_error()` di `send_controller.dart`) — belum ada perubahan kode baru untuk ini, tapi juga tidak ditemukan gap seperti "Saldo tidak cukup" di atas. Semua 4 skenario tetap butuh **verifikasi live di device** untuk konfirmasi Snackbar benar-benar muncul dengan teks yang tepat.
 
 **Skenario yang diuji:**
 
@@ -462,22 +509,28 @@ Setelah kirim berhasil, `AuthController.updateBalance()` dipanggil oleh `SendCon
 | User cancel biometrik saat konfirmasi | Tap cancel di Face ID prompt | Kembali ke `SendReviewScreen`, Snackbar error |
 | Network error saat `/tx/build` | Matikan internet sebelum tap "Kirim" | Snackbar: "Gagal memproses. Coba lagi." |
 | Network error saat `/tx/submit` | Matikan internet setelah Face ID | Snackbar: pesan error |
-| Saldo tidak cukup | Kirim nominal > saldo | Backend error 4xx → Snackbar pesan |
+| Saldo tidak cukup | Kirim nominal > saldo | Backend error 4xx → Snackbar pesan — **sudah diperbaiki, backend sekarang balas 400 "Saldo tidak cukup" secara eksplisit** |
 
 **Acceptance criteria:**
-- [ ] Semua skenario menghasilkan Snackbar, bukan crash
-- [ ] Setelah error, user bisa kembali ke HomeScreen atau coba lagi
-- [ ] `SendPhase` kembali ke `error` → UI tidak stuck di "Mengirim…"
+- [ ] Semua skenario menghasilkan Snackbar, bukan crash — belum dites live
+- [ ] Setelah error, user bisa kembali ke HomeScreen atau coba lagi — belum dites live
+- [ ] `SendPhase` kembali ke `error` → UI tidak stuck di "Mengirim…" — belum dites live
 
 ---
 
 ## S2-10 — Setup penerima demo hardcoded
 
-**Status:** `TODO` | **Prioritas:** P2 | **Tipe:** feat  
+**Status:** `ON GOING` | **Prioritas:** P2 | **Tipe:** feat  
 **Dependencies:** S1-05
 
-**Konteks:**  
-Untuk demo panggung, penerima bisa hardcoded sebagai "BCA ****1234" (mock off-ramp yang sudah ada di `ReceiveScreen`). Backend perlu tahu contract address penerima demo tanpa user harus input address panjang.
+**Update (2026-07-16):**
+- **Backend (langkah 1 & 3): sudah selesai**, malah lebih canggih dari rencana. `backend/.env.example` sudah punya `DEMO_RECEIVER_CONTRACT`, dan `/tx/build` sudah fallback ke situ via `resolveRecipient()` (lihat S2-01) — bahkan sebelum fallback demo receiver, dicoba dulu cari user lain yang cocok di store atau kontak by name, jadi tidak selalu "kirim ke nama apapun = demo receiver" seperti draft awal, tapi tetap fallback ke situ kalau tidak ketemu manapun.
+- **Langkah 2 (isi `DEMO_RECEIVER_CONTRACT` di Railway dengan contract address asli): belum bisa dilakukan** — ini butuh wallet demo-receiver benar-benar sudah dibuat lewat app (passkey ceremony asli), yang belum pernah terjadi karena belum ada testing di device fisik sama sekali (S1-07 masih `TODO`). Chicken-and-egg: butuh device test dulu untuk dapat contract address, baru bisa isi env var ini.
+- **Langkah 4 (opsional, `POST /wallet/register-demo`): tidak diimplementasikan** — memang ditandai opsional di rencana asli, dan skip aman karena `resolveRecipient()` sudah cukup fleksibel tanpa endpoint tambahan ini.
+- **Acceptance criteria kedua ("ReceiveScreen menampilkan mock off-ramp yang sesuai"): ditemukan gap & diperbaiki.** `frontend/lib/screens/receive_screen.dart` ternyata **statis penuh dalam Bahasa Inggris** ("Receive", "Share details", "Scan this to send me money", "Account •••• 4821") — tidak menyebut Rupiah/rekening/off-ramp sama sekali, dan melanggar prinsip invisible-crypto copy Bahasa Indonesia (S4-01/S4-03). Sudah diperbaiki: "Terima", "Bagikan detail", "Pindai untuk kirim uang ke saya", label "Rekening tujuan" dengan value `BCA •••• 4821` (sesuai contoh "BCA ****1234" di konteks asli issue ini). Perubahan murni string literal, tidak ada perubahan struktur widget — **belum divalidasi `flutter analyze`/`dart analyze`** karena Flutter SDK tidak tersedia di environment ini, tapi risikonya rendah (bukan perubahan logic/tipe).
+
+**Konteks (asli, untuk referensi historis):**  
+~~Untuk demo panggung, penerima bisa hardcoded sebagai "BCA ****1234" (mock off-ramp yang sudah ada di `ReceiveScreen`). Backend perlu tahu contract address penerima demo tanpa user harus input address panjang.~~ (masih akurat sebagai tujuan, "sudah ada di ReceiveScreen" yang ternyata belum — baru ditambahkan sekarang)
 
 **Langkah:**
 1. Di `backend/.env.example` tambahkan:
@@ -493,8 +546,8 @@ Untuk demo panggung, penerima bisa hardcoded sebagai "BCA ****1234" (mock off-ra
 - `backend/src/index.ts` — update logika resolve recipient di `/tx/build`
 
 **Acceptance criteria:**
-- [ ] Kirim ke nama apapun → tx diroute ke demo receiver contract
-- [ ] `ReceiveScreen` menampilkan mock off-ramp yang sesuai
+- [ ] Kirim ke nama apapun → tx diroute ke demo receiver contract — kode benar, tapi `DEMO_RECEIVER_CONTRACT` belum terisi nilai asli di Railway (lihat Update di atas)
+- [x] `ReceiveScreen` menampilkan mock off-ramp yang sesuai — diperbaiki (lihat Update), copy Indonesia + "Rekening tujuan BCA •••• 4821"
 
 ---
 
@@ -502,11 +555,16 @@ Untuk demo panggung, penerima bisa hardcoded sebagai "BCA ****1234" (mock off-ra
 
 | Tanggal | Update | Status |
 |---------|--------|--------|
-| | | |
+| 2026-07-16 | Audit menyeluruh: S2-01 s/d S2-04 sudah diimplementasikan (bareng Sprint 1, commit gabungan). Status & pseudocode direkonsiliasi dengan kode aktual, sama pola dengan Sprint 1. | Selesai (audit) |
+| 2026-07-16 | Ditemukan & diperbaiki: `/tx/build` tidak pernah cek saldo sender sebelum bangun tx — "Saldo tidak cukup" (S2-09) sebelumnya keluar sebagai error 500 generic, bukan pesan jelas. Ditambahkan pre-check eksplisit. | Fixed |
+| 2026-07-16 | Ditemukan & diperbaiki: `ReceiveScreen` (S2-10) 100% berbahasa Inggris dan tidak pernah menyebut off-ramp/Rupiah — melanggar prinsip invisible-crypto copy. Diperbaiki jadi Bahasa Indonesia dengan narasi "Rekening tujuan BCA •••• 4821". | Fixed (belum divalidasi `flutter analyze`) |
+| 2026-07-16 | S2-02 diturunkan ke `ON GOING` — blocker sama dengan S1-05 (`RELAYER_API_KEY`/OpenZeppelin Channels belum terkonfirmasi jalan). | Koreksi kritis |
 
 ## Blockers & Catatan
 
-> _Bug paling umum sprint ini:_
-> _1. `challenge` encoding mismatch — lihat S2-04_
-> _2. Passkey Kit API berbeda dari pseudocode — tulis resolusi di sini_
-> _3. Launchtube rate limit di testnet — cek kapasitas token yang didapat_
+**Bug yang ditemukan (update dari placeholder asli):**
+1. ~~`challenge` encoding mismatch~~ — **sudah diverifikasi bukan masalah** (S2-04), lihat kronologi lengkap di `sprint/sprint-1-passkey-onboarding.md` § Blockers & Catatan.
+2. **Passkey Kit API beda dari pseudocode** — sama seperti Sprint 1: `passkeyServer.buildTransferTx()`/`submitSignedTx()`/`getBalance()` di pseudocode tidak pernah ada. API asli: `SACClient.transfer()` + `kit.sign()` (S2-01), `srv.send()` via relayer (S2-02), `getUsdcBalance()` via Soroban RPC langsung, bukan Horizon (S2-03).
+3. ~~Launchtube rate limit~~ — **tidak relevan**, Launchtube tidak dipakai sama sekali (S0-11). Kapasitas yang perlu diperhatikan sekarang: rate limit/fee limit OpenZeppelin Channels testnet (belum pernah diuji volumenya, kemungkinan cukup untuk demo tapi belum diverifikasi).
+
+**Blocker aktif:** sama seperti Sprint 1 — `RELAYER_API_KEY` (S2-02) dan wallet asli dari device fisik (S2-06 dst.) adalah dua prasyarat yang menghalangi hampir semua item testing di sprint ini. Kode backend sudah dianggap selesai secara struktur; sisanya murni menunggu akses eksternal (Railway dashboard, device fisik) yang tidak tersedia di environment kerja ini.

@@ -17,13 +17,13 @@ class ReceiveScreen extends StatelessWidget {
     final text = Theme.of(context).textTheme;
 
     return AppScaffold(
-      title: 'Receive',
+      title: 'Terima',
       bottom: PrimaryPillButton(
-        label: 'Share details',
+        label: 'Bagikan detail',
         icon: Icons.ios_share,
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Details copied')),
+            const SnackBar(content: Text('Detail disalin')),
           );
         },
       ),
@@ -49,7 +49,7 @@ class ReceiveScreen extends StatelessWidget {
               children: [
                 Text('Rani Putri', style: text.titleMedium?.copyWith(color: p.ink)),
                 const SizedBox(height: KSpace.xxs),
-                Text('Scan this to send me money',
+                Text('Pindai untuk kirim uang ke saya',
                     style: text.bodySmall?.copyWith(color: p.inkMuted)),
               ],
             ),
@@ -65,7 +65,7 @@ class ReceiveScreen extends StatelessWidget {
               children: [
                 const _CopyRow(label: 'Kirimin ID', value: 'rani.putri'),
                 Divider(height: 1, color: p.hairline),
-                const _CopyRow(label: 'Account', value: '•••• 4821'),
+                const _CopyRow(label: 'Rekening tujuan', value: 'BCA •••• 4821'),
               ],
             ),
           ),
@@ -108,7 +108,7 @@ class _CopyRow extends StatelessWidget {
             onPressed: () {
               Clipboard.setData(ClipboardData(text: value));
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('$label copied')),
+                SnackBar(content: Text('$label disalin')),
               );
             },
             icon: Icon(Icons.copy_outlined, size: 18, color: p.accent),

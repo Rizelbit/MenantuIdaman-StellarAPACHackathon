@@ -218,6 +218,20 @@ app.post("/tx/build", async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Penerima tidak ditemukan" });
   }
 
+  // Cek saldo dulu sebelum bangun tx — tanpa ini, saldo kurang baru ketahuan
+  // pas simulasi Soroban gagal di dalam try/catch dan keluar sebagai error
+  // generic 500 "Gagal membangun transaksi", bukan pesan yang jelas ke user.
+  try {
+    const currentBalance = await getUsdcBalance(senderRecord.contractAddress);
+    if (currentBalance < amountUsd) {
+      return res.status(400).json({ error: "Saldo tidak cukup" });
+    }
+  } catch (err) {
+    console.error("[tx/build] balance check failed:", err);
+    // Gagal cek saldo (mis. RPC error) — lanjutkan, biar simulasi Soroban
+    // yang jadi validator terakhir daripada wallet dianggap gagal total.
+  }
+
   try {
     const kit = await getKit();
 
