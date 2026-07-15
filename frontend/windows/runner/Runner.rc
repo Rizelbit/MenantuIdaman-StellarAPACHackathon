@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "kirimin" "\0"
+            VALUE "FileDescription", "Kirimin" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "kirimin" "\0"
+            VALUE "InternalName", "Kirimin" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "kirimin.exe" "\0"
-            VALUE "ProductName", "kirimin" "\0"
+            VALUE "OriginalFilename", "Kirimin.exe" "\0"
+            VALUE "ProductName", "Kirimin" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
