@@ -1,17 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kirimin/main.dart';
 
 /// Full-app smoke: pumps the real KiriminApp (mock mode) and drives
-/// onboarding -> home -> history -> back. Verifies the app renders without
+/// welcome -> home -> history -> back. Verifies the app renders without
 /// runtime/layout errors and that forward navigation (pushNamed) yields a
 /// working AppBar back button.
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  // The Welcome screen gates on local_auth (native Face ID). There's no
+  // biometric channel under `flutter test`, so stub it to report a supported
+  // device and a successful authentication — this drives the happy path.
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/local_auth'),
+      (call) async {
+        switch (call.method) {
+          case 'isDeviceSupported':
+          case 'authenticate':
+            return true;
+          case 'getAvailableBiometrics':
+          case 'getEnrolledBiometrics':
+            return <String>['face'];
+          default:
+            return null;
+        }
+      },
+    );
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/local_auth'),
+      null,
+    );
+  });
+
   setUpAll(() async {
     await initializeDateFormatting('id_ID', null);
   });
+
+  // Tap the Welcome screen's "Log in with Face ID" pill; the stubbed channel
+  // above reports success, so the gate opens and sign-in proceeds.
+  final faceIdButton = find.widgetWithText(TextButton, 'Log in with Face ID');
 
   // Advance fake time past the mock service delays (600ms each) without
   // pumpAndSettle (which would hang on the loading spinner's animation).
@@ -21,13 +58,14 @@ void main() {
     }
   }
 
-  testWidgets('onboarding -> home -> history -> back', (tester) async {
+  testWidgets('welcome -> home -> history -> back', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: KiriminApp()));
-    await advance(tester); // splash redirect -> onboarding
+    await advance(tester); // splash redirect -> welcome
 
-    // Onboarding renders.
-    expect(find.text('Buat akun dengan Face ID'), findsOneWidget);
-    await tester.tap(find.text('Buat akun dengan Face ID'));
+    // Welcome renders.
+    expect(find.text('Kirimin'), findsOneWidget);
+    expect(faceIdButton, findsOneWidget);
+    await tester.tap(faceIdButton);
     await advance(tester, steps: 8); // register (3x600ms) + redirect + feed load
 
     // Home rendered.
@@ -54,7 +92,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(const ProviderScope(child: KiriminApp()));
     await advance(tester);
-    await tester.tap(find.text('Buat akun dengan Face ID'));
+    await tester.tap(faceIdButton);
     await advance(tester, steps: 8);
 
     expect(find.text('Total saldo'), findsOneWidget);

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../state/auth_controller.dart';
 import '../screens/splash_screen.dart';
+import '../screens/welcome_screen.dart';
+import '../screens/passcode_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/send_amount_screen.dart';
@@ -27,6 +29,8 @@ import '../screens/history_screen.dart';
 /// punya kontrak jelas.
 abstract class Routes {
   static const splash = 'splash';
+  static const welcome = 'welcome';
+  static const passcode = 'passcode';
   static const onboarding = 'onboarding';
   static const home = 'home';
   static const sendAmount = 'send-amount';
@@ -63,20 +67,29 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final signedIn = auth.value?.isSignedIn ?? false;
       final loc = state.matchedLocation;
-      final onOnboarding = loc == '/onboarding';
       final onSplash = loc == '/';
+      // Layar auth yang boleh diakses tanpa sesi: Face ID (welcome) & passcode.
+      final onAuthGate = loc == '/welcome' || loc == '/passcode';
 
-      // Belum punya akun → arahkan ke onboarding (kecuali sudah di sana).
-      if (!signedIn) return onOnboarding ? null : '/onboarding';
+      // Belum punya akun → arahkan ke welcome (kecuali sudah di layar auth).
+      if (!signedIn) return onAuthGate ? null : '/welcome';
 
-      // Sudah punya akun → keluar dari splash/onboarding ke home.
-      return (onSplash || onOnboarding) ? '/home' : null;
+      // Sudah punya akun → keluar dari splash/welcome/passcode ke home.
+      return (onSplash || onAuthGate) ? '/home' : null;
     },
     routes: [
       GoRoute(
           path: '/',
           name: Routes.splash,
           builder: (_, __) => const SplashScreen()),
+      GoRoute(
+          path: '/welcome',
+          name: Routes.welcome,
+          builder: (_, __) => const WelcomeScreen()),
+      GoRoute(
+          path: '/passcode',
+          name: Routes.passcode,
+          builder: (_, __) => const PasscodeScreen()),
       GoRoute(
           path: '/onboarding',
           name: Routes.onboarding,
