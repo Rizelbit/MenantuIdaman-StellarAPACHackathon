@@ -32,19 +32,19 @@ class SplitConfirmScreen extends ConsumerWidget {
     // RequestConfirmScreen/SendReviewScreen.
     if (state.totalIdr <= 0 || state.participants.length < 2) {
       return const AppScaffold(
-        title: 'Konfirmasi split',
+        title: 'Confirm split',
         child: EmptyView(
           icon: Icons.call_split,
-          title: 'Belum ada tagihan',
-          subtitle: 'Kembali ke layar sebelumnya untuk isi total dan peserta dulu.',
+          title: 'Nothing to split yet',
+          subtitle: 'Go back to enter a total and pick people first.',
         ),
       );
     }
 
     return AppScaffold(
-      title: 'Konfirmasi split',
+      title: 'Confirm split',
       bottom: PrimaryPillButton(
-        label: 'Kirim permintaan',
+        label: 'Send requests',
         onPressed: () => _submit(context, ref),
       ),
       child: Column(
@@ -91,7 +91,7 @@ class _SplitSummaryCard extends StatelessWidget {
           const SizedBox(height: KSpace.xs),
           MoneyText(amountIdr: totalIdr, size: 36),
           const SizedBox(height: KSpace.xs),
-          Text('Dibagi ke ${participants.length} orang',
+          Text('Split across ${participants.length} people',
               style: text.bodyMedium?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.lg),
           Divider(color: p.hairline, height: 1),
@@ -103,7 +103,7 @@ class _SplitSummaryCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      participant.isSelf ? 'Kamu · Bagianmu' : participant.name,
+                      participant.isSelf ? 'You · Your share' : participant.name,
                       style: text.bodyMedium,
                     ),
                   ),
@@ -131,7 +131,7 @@ class _SendRequestsHint extends StatelessWidget {
         const SizedBox(width: KSpace.xs),
         Expanded(
           child: Text(
-            'Tiap orang dapat permintaan untuk bagiannya',
+            'Everyone gets a friendly request for their share',
             style: text.bodySmall?.copyWith(color: p.inkMuted),
           ),
         ),

@@ -36,8 +36,8 @@ class PromoDetailScreen extends ConsumerWidget {
         title: 'Promo',
         child: EmptyView(
           icon: Icons.error_outline,
-          title: 'Promo tidak ditemukan',
-          subtitle: 'Coba buka dari beranda.',
+          title: 'Promo not found',
+          subtitle: 'Try opening it from your home screen.',
         ),
       );
     }
@@ -75,28 +75,28 @@ class _PromoDetailBody extends StatelessWidget {
         const SizedBox(height: KSpace.md),
         _PromoHero(promo: promo),
         const SizedBox(height: KSpace.xl),
-        Text('Yang kamu dapat', style: text.titleMedium),
+        Text('What you get', style: text.titleMedium),
         const SizedBox(height: KSpace.sm),
         if (isSplit) ...[
           const _FeatureRow(
             icon: Icons.balance,
-            title: 'Bagi rata atau custom',
-            desc: 'Bagi sama rata atau atur nominal tiap orang.',
+            title: 'Even or custom shares',
+            desc: 'Split equally or set each person\'s amount.',
           ),
           const _FeatureRow(
             icon: Icons.check_circle_outline,
-            title: 'Lihat siapa sudah bayar',
-            desc: 'Pantau status bayar tiap peserta sekilas.',
+            title: 'Track who paid',
+            desc: 'See who\'s paid at a glance.',
           ),
           const _FeatureRow(
             icon: Icons.notifications_outlined,
-            title: 'Pengingat halus',
-            desc: 'Kirim pengingat lembut buat yang belum bayar.',
+            title: 'Gentle reminders',
+            desc: 'A gentle nudge for friends who haven\'t paid.',
           ),
         ] else
           _FeatureRow(
             icon: Icons.info_outline,
-            title: 'Info promo',
+            title: 'About this promo',
             desc: promo.subtitle,
           ),
       ],

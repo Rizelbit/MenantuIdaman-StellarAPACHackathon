@@ -46,7 +46,7 @@ class _SplitCreateScreenState extends ConsumerState<SplitCreateScreen> {
       context.pushNamed(Routes.splitShares);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Isi total dan pilih peserta dulu')),
+        const SnackBar(content: Text('Enter a total and pick people first')),
       );
     }
   }
@@ -58,9 +58,9 @@ class _SplitCreateScreenState extends ConsumerState<SplitCreateScreen> {
     final text = Theme.of(context).textTheme;
 
     return AppScaffold(
-      title: 'Split tagihan',
+      title: 'Split a bill',
       bottom: PrimaryPillButton(
-        label: 'Lanjut',
+        label: 'Next',
         onPressed: () => _onLanjut(context, ref),
       ),
       child: Column(
@@ -71,7 +71,7 @@ class _SplitCreateScreenState extends ConsumerState<SplitCreateScreen> {
           const SizedBox(height: KSpace.lg),
           _TitleField(controller: _titleCtrl, onChanged: ctrl.setTitle),
           const SizedBox(height: KSpace.lg),
-          Text('Bagi dengan', style: text.titleMedium?.copyWith(color: p.inkMuted)),
+          Text('Split with', style: text.titleMedium?.copyWith(color: p.inkMuted)),
           const SizedBox(height: KSpace.xs),
           const _ParticipantPicker(),
         ],
@@ -93,7 +93,7 @@ class _TotalAmountField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Total tagihan', style: text.titleMedium?.copyWith(color: p.inkMuted)),
+        Text('Total bill', style: text.titleMedium?.copyWith(color: p.inkMuted)),
         const SizedBox(height: KSpace.xs),
         TextField(
           controller: controller,
@@ -124,12 +124,12 @@ class _TitleField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Untuk apa?', style: text.titleMedium?.copyWith(color: p.inkMuted)),
+        Text('What\'s it for?', style: text.titleMedium?.copyWith(color: p.inkMuted)),
         const SizedBox(height: KSpace.xs),
         TextField(
           controller: controller,
           style: text.bodyLarge,
-          decoration: const InputDecoration(hintText: 'Listrik, Juli 2026'),
+          decoration: const InputDecoration(hintText: 'Electricity, July 2026'),
           onChanged: onChanged,
         ),
       ],
@@ -165,13 +165,13 @@ class _ParticipantPicker extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Bagi dengan', style: text.titleMedium),
+                  Text('Split with', style: text.titleMedium),
                   const SizedBox(height: KSpace.md),
                   if (contacts.isEmpty)
                     const EmptyView(
                       icon: Icons.person_outline,
-                      title: 'Belum ada kontak',
-                      subtitle: 'Tambahkan kontak dulu untuk mengajak split.',
+                      title: 'No contacts yet',
+                      subtitle: 'Add a contact first to invite them to a split.',
                     )
                   else
                     for (final c in contacts)
@@ -252,7 +252,7 @@ class _ParticipantPicker extends ConsumerWidget {
                     child: Icon(Icons.add, size: 20, color: p.ink),
                   ),
                   const SizedBox(height: KSpace.xs),
-                  Text('Tambah', style: text.bodySmall?.copyWith(color: p.ink)),
+                  Text('Add', style: text.bodySmall?.copyWith(color: p.ink)),
                 ],
               ),
             ),

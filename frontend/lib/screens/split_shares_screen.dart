@@ -62,9 +62,9 @@ class _SplitSharesScreenState extends ConsumerState<SplitSharesScreen> {
     _resetControllersIfToggled(state.splitEvenly);
 
     return AppScaffold(
-      title: 'Siapa bayar berapa',
+      title: 'Who pays what',
       bottom: PrimaryPillButton(
-        label: 'Lanjut',
+        label: 'Continue',
         onPressed:
             state.isBalanced ? () => context.pushNamed(Routes.splitConfirm) : null,
       ),
@@ -116,7 +116,7 @@ class _SplitEvenlyToggle extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Bagi rata', style: text.bodyLarge),
+        Text('Split evenly', style: text.bodyLarge),
         Switch(value: value, onChanged: onChanged),
       ],
     );
@@ -200,9 +200,9 @@ class _BalanceValidator extends StatelessWidget {
         const SizedBox(width: KSpace.xs),
         Expanded(
           child: Text(
-            '${formatMoney(assignedIdr, Currency.idr)} dari '
+            '${formatMoney(assignedIdr, Currency.idr)} of '
             '${formatMoney(totalIdr, Currency.idr)}. '
-            '${isBalanced ? 'Sudah pas!' : 'Belum pas'}',
+            '${isBalanced ? 'All balanced!' : 'Not balanced yet'}',
             style: text.bodyMedium?.copyWith(color: color),
           ),
         ),
