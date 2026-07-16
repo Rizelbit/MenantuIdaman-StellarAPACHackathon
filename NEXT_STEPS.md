@@ -1,226 +1,334 @@
-# Sprint 0 — Langkah Manual yang Tersisa
+# Kirimin — Checklist Final Sebelum Demo
 
-Dokumen ini berisi **semua yang tidak bisa dikerjakan otomatis** dari environment coding — karena butuh Railway dashboard, akun Apple Developer, Xcode di macOS, atau device fisik. Semua yang bisa dikerjakan dari kode sudah selesai (lihat `sprint/sprint-0-foundation.md` untuk detail lengkap per issue).
+Dokumen ini adalah **titik kumpul terakhir** dari seluruh backlog Sprint 0–4 (`sprint/sprint-0-foundation.md` s/d `sprint/sprint-4-polish-demo.md`). Semua yang bisa dikerjakan lewat kode/config sudah selesai dan sudah di-commit ke `main`. Yang tersisa di sini **semuanya butuh akses yang tidak tersedia di environment kerja Claude** — Railway dashboard, device fisik Android, atau eksekusi manual oleh manusia (rekam video, latihan presenter).
 
-Ikuti urutan di bawah — tiap langkah punya dependency ke langkah sebelumnya.
+**Cara pakai:** kerjakan berurutan dari Prioritas 0 ke bawah — tiap prioritas adalah prasyarat untuk prioritas setelahnya. Jangan loncat ke Prioritas 3 kalau Prioritas 0 belum beres; hasilnya akan gagal dengan cara yang membingungkan (misal: HTTP 200 tapi wallet tidak pernah ter-deploy on-chain).
 
-> **Update (2026-07-15):** Dua bug tambahan ditemukan & diperbaiki saat audit `SPRINT-TONIGHT.md` vs kode aktual:
-> 1. `frontend/lib/app/env.dart` punya flag `USE_MOCK` default `true` — tanpa `--dart-define=USE_MOCK=false`, app SELALU pakai data mock, tidak pernah menyentuh backend asli. `frontend/run-dev.sh` sekarang sudah otomatis pass flag ini.
-> 2. `HomeScreen` butuh `GET /home/:userId/feed` yang sebelumnya **tidak ada** di backend (padahal `docs/frontend/backend_handoff.md` bilang cuma butuh 5 endpoint) — tanpa ini, app **stuck di HomeScreen dengan tombol retry setelah onboarding berhasil**, tidak bisa lanjut ke Send. Sudah ditambahkan sebagai stub minimal di `backend/src/index.ts`.
->
-> Detail lengkap ada di `SPRINT-TONIGHT.md`.
-
-> **Update (2026-07-16):**
-> - **JANGAN ganti domain Railway ke custom domain** (misal `api.kirimin.app`). RP_ID **sudah di-lock** ke `menantuidaman-stellarapachackathon-production.up.railway.app` — ganti domain = passkey lama tidak bisa dipakai lagi, dan `.well-known` files perlu di-generate ulang semua. Kalau ada checklist yang menyebut "domain custom", **abaikan bagian itu**, kita tetap pakai domain Railway apa adanya.
-> - **Deploy sempat berisiko putus**: commit backend terbaru (nambah contacts/requests/splits + real balance query) mengganti `package-lock.json` jadi `pnpm-lock.yaml`, tapi `Dockerfile` masih pakai `npm ci` — build Railway berikutnya dipastikan gagal. **Sudah diperbaiki & di-push** (Dockerfile sekarang pakai `pnpm@9`, dites lokal: install + build + test semua lolos).
-> - **Wallet baru selalu 0 USDC, solusinya BUKAN `token.mint()`** — kita bukan issuer USDC (`GBBD47IF6...` adalah issuer testnet resmi Circle), jadi mint tidak akan pernah berhasil. Solusi asli: **`POST /wallet/:userId/fund`** (baru ditambahkan) transfer USDC dari akun funder (`demo-sender`) yang sudah di-isi via [faucet.circle.com](https://faucet.circle.com/). Lihat §1b di bawah.
+Setiap poin mencantumkan **[Referensi]** ke bagian sprint doc yang relevan — buka file itu kalau butuh konteks lebih dalam soal *kenapa* langkah itu diperlukan.
 
 ---
 
-## 0. Push & deploy (WAJIB PALING AWAL)
+## Ringkasan: apa yang sudah pasti selesai
 
-Semua fix di bawah ini ada di commit lokal, **belum live** di Railway:
-- Fix Content-Type `apple-app-site-association` (`application/octet-stream` → `application/json`)
-- `assetlinks.json` dengan package name baru `com.kirimin.app`
+Supaya tidak dikerjakan ulang — ini semua **sudah diverifikasi** (lewat `tsc`, test otomatis, atau curl live terhadap Railway production):
 
-```bash
-git push origin main
-```
+| Area | Status |
+|------|--------|
+| Backend: 5 endpoint inti (`register-options`, `wallet/create`, `tx/build`, `tx/submit`, `wallet/:id/balance`) | ✓ Diimplementasikan, kontrak data Flutter↔backend nol mismatch (S3-01) |
+| Backend: endpoint tambahan (`home/feed`, `contacts`, `requests`, `splits`, `wallet/:id/fund`) | ✓ Diimplementasikan, field cocok dengan model Flutter |
+| `.well-known` (AASA + assetlinks.json) | ✓ Live di Railway, Content-Type benar, JSON valid (dicek live 2026-07-16) |
+| Bug `USDC_SAC_ADDRESS` (contract ID tidak valid) | ✓ Fixed — sekarang dihitung dari `USDC_ISSUER`, bukan hardcode |
+| Bug `USE_MOCK` (app selalu pakai data palsu) | ✓ Fixed — `run-dev.sh` selalu pass `USE_MOCK=false` |
+| Dockerfile (npm ci vs pnpm) | ✓ Fixed — deploy Railway tidak lagi dijamin gagal |
+| Balance pre-check di `/tx/build` ("Saldo tidak cukup") | ✓ Ditambahkan |
+| Android package rename, entitlements, launcher icon, font | ✓ Selesai (S0-08, S4-02, S4-12) |
+| Dokumentasi Sprint 0–4 | ✓ Direkonsiliasi penuh dengan kode aktual |
 
-Railway auto-deploy dari `main` (asumsi sudah dikonfigurasi begitu di S0-01). Tunggu ~1-2 menit, lalu verifikasi:
-
-```bash
-curl -sI https://menantuidaman-stellarapachackathon-production.up.railway.app/.well-known/apple-app-site-association
-# Harus: HTTP 200, content-type: application/json (versi HTTP/1.1 vs HTTP/2 tidak masalah, itu cuma protokol edge server Railway)
-
-curl -s https://menantuidaman-stellarapachackathon-production.up.railway.app/.well-known/assetlinks.json
-# Harus mengandung "package_name": "com.kirimin.app"
-```
-
-Kalau `Content-Type` masih salah setelah deploy, cek Railway build log — kemungkinan build gagal atau masih pakai image lama.
-
-**Menyelesaikan:** S0-04 (Content-Type check), S0-06 (Content-Type check), S0-08 (assetlinks.json live).
+**Yang TIDAK bisa saya verifikasi otomatis** (alasan di setiap prioritas di bawah): status live `RELAYER_API_KEY`/`SIGNER_SECRET_KEY` di Railway, dan **semua yang butuh device fisik** — belum ada satupun wallet yang benar-benar ter-deploy on-chain dari device sungguhan sampai dokumen ini ditulis.
 
 ---
 
-## 1. Railway dashboard — isi environment variables
+## 🔴 PRIORITAS 0 — Blocker mutlak (tanpa ini, aplikasi tidak berfungsi sama sekali)
 
-Buka [railway.app](https://railway.app) dashboard → project → service → tab **Variables**. Isi/verifikasi (nilai lihat `sprint/CONFIG.md` untuk yang non-sensitif, `sprint/SECRETS.md` untuk yang sensitif):
+### 0.1 Verifikasi `RELAYER_API_KEY` benar-benar aktif di Railway
 
-```
-PORT=3000
-NODE_ENV=production
-RP_ID=menantuidaman-stellarapachackathon-production.up.railway.app
-RP_NAME=Kirimin
-ORIGIN=https://menantuidaman-stellarapachackathon-production.up.railway.app
-STELLAR_NETWORK=testnet
-SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
-HORIZON_URL=https://horizon-testnet.stellar.org
-FRIENDBOT_URL=https://friendbot.stellar.org
-USDC_ISSUER=GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5
-SIGNER_SECRET_KEY=<dari sprint/SECRETS.md>
-RELAYER_BASE_URL=<lihat §1a di bawah — WAJIB, bukan opsional>
-RELAYER_API_KEY=<lihat §1a di bawah — WAJIB, bukan opsional>
-DEMO_RECEIVER_CONTRACT=
-```
+**[Referensi: `sprint/sprint-0-foundation.md` § S0-11, `sprint/sprint-1-passkey-onboarding.md` § S1-05, `sprint/sprint-2-send-flow.md` § S2-02]**
 
-Catatan: `LAUNCHTUBE_URL`, `LAUNCHTUBE_TOKEN`, dan `FACTORY_CONTRACT_ID` **tidak perlu diisi** — sudah dihapus dari `.env.example` karena tidak relevan (lihat S0-11 dan S0-10 di sprint doc).
+**Kenapa ini prioritas #1 mutlak:** `PasskeyServer.send()` (dipanggil di `/wallet/create` dan `/tx/submit`) **selalu** butuh relayer terkonfigurasi. Tanpa `RELAYER_BASE_URL`/`RELAYER_API_KEY` yang valid, setiap panggilan gagal dengan `RELAYER_NOT_CONFIGURED` — dan yang lebih berbahaya, `/wallet/create` **tidak mengecek keberhasilan submit sebelum lanjut**, jadi API akan balas `200 OK` dengan `contractAddress` yang terlihat valid padahal wallet-nya **tidak pernah benar-benar ter-deploy on-chain**. Ini ditemukan dengan cara paling meyakinkan yang bisa dilakukan tanpa device — install `node_modules` beneran dan baca `node_modules/passkey-kit/dist/server.js` langsung.
 
-Setelah save, Railway redeploy otomatis. Verifikasi `/health` masih 200.
+**Kenapa ini "verifikasi", bukan "kerjakan dari nol":** ada indikasi kuat ini sudah diisi — sesi sebelumnya kamu pernah membagikan env var lokal yang sudah berisi `RELAYER_BASE_URL=https://channels.openzeppelin.com` dan `RELAYER_API_KEY` dengan format UUID yang valid. Tapi saya tidak punya akses Railway dashboard untuk konfirmasi ini benar-benar ter-deploy di production (bukan cuma di `.env` lokal seseorang).
 
-**Menyelesaikan:** S0-02.
-
----
-
-## 1a. WAJIB: Konfigurasi OpenZeppelin Channels (`RELAYER_BASE_URL` / `RELAYER_API_KEY`)
-
-> **Update (2026-07-15):** Keputusan awal S0-11 ("skip Launchtube, backend self-relay langsung pakai `SIGNER_SECRET_KEY` tanpa relayer eksternal") **terbukti salah** setelah dicek langsung ke source code `passkey-kit` yang terpasang (`node_modules/passkey-kit/dist/server.js` + README package-nya). `PasskeyServer.send()` **selalu** butuh relayer terkonfigurasi — tanpa itu, setiap panggilan langsung gagal dengan error `RELAYER_NOT_CONFIGURED`. Ini artinya:
-> - `/wallet/create` akan "sukses" secara HTTP (200 OK, ada `contractAddress`) **tapi wallet-nya tidak pernah benar-benar ter-deploy on-chain**, karena kode tidak mengecek `submitResult.success` sebelum lanjut.
-> - `/tx/submit` (kirim uang) akan gagal total dengan cara yang sama.
->
-> Jadi ini bukan langkah opsional/nice-to-have — **tanpa ini, seluruh app tidak akan berfungsi**, terlepas dari fix-fix lain yang sudah dilakukan.
-
-**Kabar baiknya: tidak perlu ubah kode sama sekali.** `backend/src/passkey.ts` (`getServer()`) sudah benar mengonsumsi `RELAYER_BASE_URL`/`RELAYER_API_KEY` persis sesuai bentuk yang dibutuhkan `passkey-kit`'s `RelayerClient` (pembungkus tipis dari `@openzeppelin/relayer-plugin-channels`). Ini murni isu konfigurasi, bukan bug kode.
-
-**Langkah:**
-
-1. Generate API key testnet gratis — **tidak ada proses approval, instan, self-service** (sudah diverifikasi langsung: request ke URL ini langsung mengembalikan JSON berisi key baru, tanpa form/login/waiting period):
-   ```
-   https://channels.openzeppelin.com/testnet/gen
-   ```
-   Buka di browser atau `curl` — responsnya `{"apiKey":"<uuid>"}`. Setiap request menghasilkan key baru, jadi generate sekali saja dan simpan hasilnya (jangan buka berkali-kali tanpa perlu).
-
-2. Isi di Railway dashboard → Variables:
-   ```
-   RELAYER_BASE_URL=https://channels.openzeppelin.com
-   RELAYER_API_KEY=<apiKey dari langkah 1>
-   ```
-
-3. **Simpan juga** `RELAYER_API_KEY` di `sprint/SECRETS.md` (file ini sudah di-gitignore) supaya tim lain tidak perlu generate ulang. **Jangan** taruh key asli di `sprint/CONFIG.md` atau file lain yang ter-commit ke git.
-
-4. Setelah Railway redeploy, test `/wallet/create` dengan curl atau lewat app — kalau berhasil, `submitResult.success` akan `true` dan muncul log `[wallet/create] deploy tx: <hash>` di Railway logs (bukan `deploy failed`).
-
-**File terkait (tidak perlu diubah, sudah benar):**
-- `backend/src/passkey.ts` — `getServer()` sudah membangun `relayer: { baseUrl, apiKey }` dengan benar dari env vars ini.
-
-**Menyelesaikan:** prasyarat mutlak untuk S1-05, S2-01, S2-02 — tanpa ini, onboarding maupun kirim uang tidak akan pernah benar-benar berhasil on-chain.
-
----
-
-## 1b. Isi wallet demo dengan USDC testnet (pakai `POST /wallet/:userId/fund`)
-
-**Kenapa `token.mint()` tidak dipakai:** `USDC_ISSUER` (`GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`) adalah **issuer testnet resmi Circle** — kita tidak punya secret key-nya, jadi `mint()` akan selalu gagal (butuh otoritas issuer). Solusinya: transfer dari akun yang **sudah** punya saldo USDC ke wallet baru.
-
-**Langkah:**
-
-1. Buka [faucet.circle.com](https://faucet.circle.com/) (gratis, tanpa akun, instan) → pilih network **Stellar** → isi alamat G dari `demo-sender` (lihat `sprint/CONFIG.md` § Stellar Testnet — "Demo Sender Public Key") → klik **Get Tokens**.
-2. Isi env var baru di Railway:
-   ```
-   DEMO_FUNDER_SECRET_KEY=<secret key demo-sender, dari sprint/SECRETS.md>
-   ```
-3. Setelah wallet demo dibuat (via onboarding di app), panggil endpoint baru untuk isi saldo:
+**Langkah verifikasi:**
+1. Buka Railway dashboard → project → service → tab **Variables**. Konfirmasi `RELAYER_BASE_URL` dan `RELAYER_API_KEY` terisi (bukan kosong, bukan placeholder).
+2. Kalau belum terisi: generate key baru — **gratis, instan, tanpa approval**:
    ```bash
-   curl -X POST https://menantuidaman-stellarapachackathon-production.up.railway.app/wallet/<userId>/fund \
-     -H "Content-Type: application/json" \
-     -d '{"amountUsd": 50}'
+   curl https://channels.openzeppelin.com/testnet/gen
+   # Respons: {"apiKey":"<uuid>"}
    ```
-   `userId` didapat dari response `/wallet/create` (atau log Railway).
-4. Verifikasi: `GET /wallet/<userId>/balance` harus mengembalikan `balanceUsd` sesuai jumlah yang di-fund.
+   Isi `RELAYER_BASE_URL=https://channels.openzeppelin.com` dan `RELAYER_API_KEY=<apiKey di atas>` di Railway. Simpan juga di `sprint/SECRETS.md` (sudah gitignore) supaya tim lain tidak generate ulang.
+3. Kalau sudah terisi: lanjut ke langkah verifikasi fungsional di 0.3 di bawah (baru bisa dites setelah ada wallet).
 
-**Catatan:** endpoint ini **tidak dipanggil otomatis** oleh flow onboarding/send manapun — sengaja manual, supaya tidak ada transaksi tak terduga saat demo. Kode sudah `tsc`-clean dan dites logic-nya terhadap tipe SDK asli (`AssembledTransaction.signAndSend()`, `basicNodeSigner`), tapi **belum pernah dieksekusi live** (butuh secret key asli yang tidak saya pegang) — jadi jalankan sekali dulu di luar jam demo untuk pastikan jalan sebelum diandalkan.
+**File terkait (sudah benar, tidak perlu diubah):** `backend/src/passkey.ts` fungsi `getServer()` — sudah mengonsumsi kedua env var ini dengan benar.
 
-**Menyelesaikan:** task #2 di daftar prioritas ("Funding Wallet Testnet dengan USDC").
+### 0.2 Verifikasi `SIGNER_SECRET_KEY` bukan placeholder
 
----
+**[Referensi: `sprint/sprint-1-passkey-onboarding.md` § S1-02]**
 
-## 2. Apple Developer Program (blocker biaya)
+`SIGNER_SECRET_KEY` dipakai sebagai `deploySource` di `PasskeyKit` — menandatangani transaksi *deploy* wallet baru (beda dari `RELAYER_API_KEY` yang menangani *submission*, keduanya wajib, bukan pengganti satu sama lain). Kalau env ini masih string literal seperti `"PLACEHOLDER"`, `/wallet/create` akan gagal dengan error signing, bukan error relayer — gejalanya beda, jadi kalau sudah isi 0.1 tapi masih gagal, cek ini dulu.
 
-S0-07 (iOS Associated Domains) butuh **Team ID** asli. Free/Personal Team Apple ID kemungkinan besar **tidak mendukung** Associated Domains capability.
+**Langkah:** Railway dashboard → Variables → pastikan `SIGNER_SECRET_KEY` diisi secret key Stellar asli (format `S` + 55 karakter) dari `sprint/SECRETS.md`, bukan teks placeholder.
 
-1. Cek apakah tim sudah punya akun Apple Developer Program berbayar ($99/tahun). Kalau belum, ini keputusan bisnis (bayar atau skip iOS untuk demo).
-2. Kalau sudah punya: buka [developer.apple.com](https://developer.apple.com) → Account → Membership → salin **Team ID** (10 karakter).
-3. Update dua file dengan Team ID asli:
-   - `backend/public/.well-known/apple-app-site-association` — ganti `TEAM_ID_NANTI_DIISI` jadi Team ID asli, contoh: `"ABCDE12345.com.kirimin.app"`
-   - `frontend/ios/Runner.xcodeproj/project.pbxproj` — tambahkan `DEVELOPMENT_TEAM = <TEAM_ID>;` di 3 build config Runner (Debug/Release/Profile), sejajar dengan `CODE_SIGN_ENTITLEMENTS` yang sudah ada di baris yang sama.
-4. Commit & push (langkah 0 lagi) supaya AASA live dengan Team ID benar.
+### 0.3 Verifikasi fungsional: buat 1 wallet, cek log Railway
 
-**Kalau tim memutuskan skip iOS untuk demo:** cukup demo di Android saja, dan catat itu di `sprint/sprint-0-foundation.md` § Blockers.
-
-**Menyelesaikan:** sisa S0-04 (Team ID), prasyarat S0-07 build.
+Setelah 0.1 dan 0.2 terisi, verifikasi paling murah (tidak perlu device fisik dulu) adalah cek Railway **deploy log** setelah ada percobaan `/wallet/create` — tapi karena endpoint ini butuh attestation WebAuthn asli, verifikasi penuh baru bisa jalan bareng Prioritas 1 (device test) di bawah. Tandanya:
+- **Sukses:** log `[wallet/create] deploy tx: <hash>` muncul.
+- **Gagal relayer:** log `[wallet/create] deploy failed: ...RELAYER_NOT_CONFIGURED...` — berarti 0.1 belum benar.
+- **Gagal signing:** error terkait secret key invalid — berarti 0.2 belum benar.
 
 ---
 
-## 3. Buka project di Xcode (butuh macOS)
+## 🟠 PRIORITAS 1 — Device test pertama: Onboarding (Android)
 
-Setelah Team ID terisi (langkah 2):
+**[Referensi: `sprint/sprint-1-passkey-onboarding.md` § S1-07, `sprint/sprint-0-foundation.md` § S0-14]**
 
-1. Buka `frontend/ios/Runner.xcworkspace` (bukan `.xcodeproj`) di Xcode.
-2. Klik target **Runner** → tab **Signing & Capabilities**.
-3. Verifikasi **Associated Domains** sudah muncul dengan value `webcredentials:menantuidaman-stellarapachackathon-production.up.railway.app` (harusnya sudah otomatis terbaca dari `Runner.entitlements` yang sudah dibuat).
-4. Pastikan **Automatically manage signing** aktif dan Team sudah terpilih (dari langkah 2).
-5. Sambungkan iOS device fisik → **Run** (▶) atau:
-   ```bash
-   cd frontend
-   ./run-dev.sh -d <ios-device-id>
-   ```
-6. Verifikasi di device: app boot, tidak crash, splash → onboarding.
+**Prasyarat:** Prioritas 0 selesai. **iOS di-skip permanen** (kendala biaya Apple Developer Program) — semua device test dari sini pakai **Android saja**.
 
-**Menyelesaikan:** S0-07 acceptance criteria, bagian iOS dari S0-14.
-
----
-
-## 4. Android: build & verifikasi di device fisik
-
-Butuh Flutter SDK terinstall + Android device fisik (atau emulator dengan Google Play Services, karena Credential Manager/passkey butuh itu).
+### 1.1 Siapkan Flutter environment
 
 ```bash
 cd frontend
 flutter pub get
 ```
 
-Cek output/dokumentasi package `passkeys` (versi `^2.4.0`) — pastikan tidak ada langkah manual tambahan untuk Android yang belum dilakukan (kemungkinan sudah cukup dengan `AndroidManifest.xml` + `strings.xml` yang sudah dikonfigurasi).
+Cek dokumentasi package `passkeys` (`^2.4.0`) kalau ada langkah manual tambahan untuk Android — kemungkinan besar sudah cukup, karena `AndroidManifest.xml` + `strings.xml` sudah dikonfigurasi (S0-08).
+
+### 1.2 Jalankan ke device fisik — **WAJIB pakai flag ini**
 
 ```bash
 ./run-dev.sh -d <android-device-id>
 ```
 
-Di device, jalankan flow "Buat akun dengan Face ID/sidik jari" (walau backend belum implementasi penuh, minimal Digital Asset Links tidak boleh error). Pantau log:
-
+`run-dev.sh` **sudah otomatis** pass `--dart-define=USE_MOCK=false`. Kalau menjalankan `flutter run` manual (bukan lewat script ini), **WAJIB tambahkan flag ini sendiri**:
 ```bash
-adb logcat | grep -iE "asset|credential|fido"
+flutter run \
+  --dart-define=USE_MOCK=false \
+  --dart-define=BACKEND_URL=https://menantuidaman-stellarapachackathon-production.up.railway.app \
+  --dart-define=RP_ID=menantuidaman-stellarapachackathon-production.up.railway.app
 ```
+**Kenapa ini kritis:** `Env.useMock` default `true` di `frontend/lib/app/env.dart`. Tanpa flag ini, app **selalu** pakai `MockPasskeyService`/`MockWalletApi` — kelihatan "berhasil" di layar padahal tidak pernah menyentuh backend asli sama sekali. Ini jebakan paling gampang bikin salah kesimpulan "sudah jalan".
 
-Tidak boleh ada error terkait Digital Asset Links / domain verification.
+### 1.3 Jalankan flow onboarding & verifikasi
 
-**Untuk test flow kirim uang (bukan cuma onboarding):** backend butuh 2 wallet — pengirim dan penerima. `POST /tx/build` cari penerima dari user lain yang sudah terdaftar di memory store, atau fallback ke env `DEMO_RECEIVER_CONTRACT` (lihat `backend/src/index.ts` `/tx/build`). Kalau cuma test dengan 1 device/1 akun, isi `DEMO_RECEIVER_CONTRACT` di Railway dengan contract address wallet demo (lihat `sprint/CONFIG.md` § Stellar Testnet — "Demo Receiver Contract Address"). Kalau belum ada, kirim akan gagal dengan error "Penerima tidak ditemukan".
+1. Splash → OnboardingScreen → tap "Buat akun dengan Face ID"
+2. **Verifikasi biometrik/Credential Manager Android muncul** (bukan alert biasa)
+3. Setelah biometrik sukses → harus masuk HomeScreen
+4. Pantau log device:
+   ```bash
+   adb logcat | grep -iE "asset|credential|fido"
+   ```
+   Tidak boleh ada error terkait Digital Asset Links / domain verification.
+5. Cek Railway logs untuk `[wallet/create] deploy tx: <hash>` — **ini bukti wallet benar-benar ter-deploy on-chain**, bukan cuma HTTP 200.
 
-Verifikasi eksternal (setelah langkah 0 — assetlinks.json harus sudah live):
-- [Google Digital Asset Links tester](https://developers.google.com/digital-asset-links/tools/generator) — masukkan package `com.kirimin.app` dan SHA-256 `54:4E:87:DD:1E:1C:29:A5:D1:A0:2F:65:28:AF:91:67:AC:40:D0:E1:CC:35:61:18:8C:55:9A:16:BA:B4:12:D3` (dari `sprint/CONFIG.md`).
-- [Branch AASA Validator](https://branch.io/resources/aasa-validator/) untuk domain Railway (setelah Team ID terisi, langkah 2).
+### 1.4 Verifikasi on-chain di Stellar Expert
 
-**Menyelesaikan:** S0-08 acceptance criteria, bagian Android dari S0-14.
+**[Referensi: `sprint/sprint-1-passkey-onboarding.md` § S1-08]**
+
+Ambil `contractAddress` dari response `/wallet/create` (atau Railway log) → buka:
+```
+https://stellar.expert/explorer/testnet/contract/<contractAddress>
+```
+Verifikasi contract exists dan ada creation transaction.
+
+**Setelah langkah ini berhasil:** catat `contractAddress` yang muncul — dibutuhkan untuk Prioritas 2.
 
 ---
 
-## 5. `flutter analyze`
+## 🟠 PRIORITAS 2 — Setup penerima demo & funding USDC
+
+**[Referensi: `sprint/sprint-2-send-flow.md` § S2-10, § S1b di dokumen ini]**
+
+Ini **chicken-and-egg** yang cuma bisa diselesaikan setelah Prioritas 1 berhasil minimal sekali (perlu wallet asli untuk didapat contract address-nya).
+
+### 2.1 Buat wallet kedua sebagai "penerima" (Rani Putri)
+
+Ulangi Prioritas 1 sekali lagi dengan **user baru** (nama berbeda saat register) — device yang sama atau device kedua. Catat `contractAddress` wallet kedua ini.
+
+**Kenapa namanya harus konsisten:** demo script (`sprint/sprint-4-polish-demo.md` § S4-05, sudah direvisi) pakai nama **"Rani Putri"** sebagai penerima — ini harus konsisten dengan nama yang **di-hardcode** di `frontend/lib/screens/receive_screen.dart` (frontend sudah di-lock, tidak bisa diubah lagi). Kalau saat demo presenter mengetik nama lain di kolom penerima, cerita "HP kedua nunjukin akun Rani Putri" jadi tidak nyambung secara logis (walau secara teknis tetap jalan lewat fallback `DEMO_RECEIVER_CONTRACT`).
+
+### 2.2 Isi `DEMO_RECEIVER_CONTRACT` di Railway
+
+```
+DEMO_RECEIVER_CONTRACT=<contractAddress dari 2.1>
+```
+
+Simpan juga di `sprint/CONFIG.md` § Stellar Testnet baris "Demo Receiver Contract Address" (nilai ini **bukan** secret, aman di-commit).
+
+**Kenapa ini penting:** `resolveRecipient()` di `backend/src/index.ts` mencoba 4 cara resolve penerima berurutan — userId langsung, contract address langsung, nama kontak terdaftar, baru fallback ke `DEMO_RECEIVER_CONTRACT`. Kalau env ini kosong dan penerima tidak match cara manapun, `/tx/build` balas error "Penerima tidak ditemukan".
+
+### 2.3 Fund wallet pengirim dengan USDC testnet
+
+**[Referensi: dokumen ini § 1b versi sebelumnya, `sprint/sprint-2-send-flow.md` § S2-03]**
+
+**Kenapa `token.mint()` TIDAK dipakai:** `USDC_ISSUER` (`GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`) adalah issuer testnet **resmi Circle** — kita tidak memegang secret key-nya, jadi `mint()` akan selalu gagal (butuh otoritas issuer). Solusi: transfer dari akun yang **sudah** punya saldo USDC.
+
+**Langkah:**
+1. Buka [faucet.circle.com](https://faucet.circle.com/) (gratis, tanpa akun, instan) → pilih network **Stellar** → isi alamat G dari `demo-sender` (`sprint/CONFIG.md` § Stellar Testnet, "Demo Sender Public Key") → **Get Tokens**.
+2. Isi env var baru di Railway:
+   ```
+   DEMO_FUNDER_SECRET_KEY=<secret key demo-sender, dari sprint/SECRETS.md>
+   ```
+3. Panggil endpoint fund untuk wallet pengirim (dari Prioritas 1, bukan wallet penerima):
+   ```bash
+   curl -X POST https://menantuidaman-stellarapachackathon-production.up.railway.app/wallet/<userId-pengirim>/fund \
+     -H "Content-Type: application/json" \
+     -d '{"amountUsd": 50}'
+   ```
+4. Verifikasi: `GET /wallet/<userId-pengirim>/balance` harus mengembalikan `balanceUsd` > 0.
+
+**Catatan penting:** endpoint `/wallet/:userId/fund` **belum pernah dieksekusi live** — kodenya sudah `tsc`-clean dan logic-nya diverifikasi terhadap tipe SDK asli (`AssembledTransaction.signAndSend()`, `basicNodeSigner`), tapi saya tidak memegang secret key asli untuk mengetesnya sendiri. **Jalankan ini di luar jam demo dulu** untuk pastikan berfungsi sebelum diandalkan saat presentasi.
+
+---
+
+## 🟡 PRIORITAS 3 — Verifikasi alur kirim uang (Send Flow)
+
+**[Referensi: `sprint/sprint-2-send-flow.md` § S2-06, S2-07, S2-08, `sprint/sprint-3-integration.md` § S3-04]**
+
+**Prasyarat:** Prioritas 1 & 2 selesai (ada wallet pengirim berisi USDC, ada wallet/env penerima).
+
+### 3.1 Test kirim uang end-to-end di device
+
+Dari HomeScreen wallet pengirim:
+1. Tap "Kirim" → isi nama **"Rani Putri"** (harus persis, lihat 2.1) + nominal (misal Rp 1.000.000)
+2. Verifikasi preview real-time: **"Keluarga terima Rp 1.000.000"** — bukan Rp 995.000. **Fee di app ini 0% by design** (`Env.feeRate = 0.0` di `frontend/lib/app/env.dart`, komentar eksplisit: "Demo: nol biaya"). Kalau ada materi lama (slide, catatan) yang menyebut fee 0,5%/Rp 995.000, itu sudah basi — abaikan.
+3. Tap "Lanjut" → `SendReviewScreen` dengan `FeeBreakdownCard`
+4. Tap "Kirim sekarang" → Face ID/fingerprint → tunggu settle
+5. Verifikasi `SendSuccessScreen`: "Uang terkirim. Rani Putri menerima Rp 1.000.000."
+6. Kembali ke HomeScreen → **verifikasi saldo berkurang**
+
+### 3.2 Verifikasi balance update
+
+**[Referensi: `sprint/sprint-3-integration.md` § S3-05]**
+
+Kode di kedua sisi sudah diverifikasi benar via code review:
+- `send_controller.dart` `confirmAndSend()` memanggil `api.getBalanceUsd()` setelah submit sukses.
+- Backend `/tx/submit` memanggil `getUsdcBalance()` (query on-chain asli lewat Soroban RPC) sebelum mencatat transaksi.
+
+Yang perlu dites live: apakah angka yang **benar-benar tampil di layar** berubah sesuai — code review tidak bisa membuktikan rendering.
+
+### 3.3 Verifikasi transaksi di Stellar Expert
+
+Dari Railway log `/tx/submit`, ambil transaction hash → buka:
+```
+https://stellar.expert/explorer/testnet/tx/<txHash>
+```
+Verifikasi: operation type `invoke_contract`, amount sesuai, sender/receiver contract address sesuai, fee disponsori (bukan dari wallet user).
+
+### 3.4 Test repeat send (tanpa restart backend)
+
+**[Referensi: `sprint/sprint-3-integration.md` § S3-09]**
+
+Kirim 3x berturut-turut tanpa restart Railway. `SendController.reset()` sudah dikonfirmasi terpanggil setelah tap "Selesai" (`send_success_screen.dart`). **Catatan teknis (bukan blocker):** `txStore` di backend tidak punya TTL/expiry — kalau ada percobaan kirim yang di-cancel di tengah jalan (bukan sukses/gagal, tapi ditinggal), entry-nya nyangkut di memory sampai server restart. Tidak masalah untuk skala demo (beberapa transaksi saja).
+
+---
+
+## 🟡 PRIORITAS 4 — Error states & code health
+
+**[Referensi: `sprint/sprint-1-passkey-onboarding.md` § S1-09, `sprint/sprint-2-send-flow.md` § S2-09, `sprint/sprint-0-foundation.md` § S0-14]**
+
+### 4.1 `flutter analyze`
 
 ```bash
 cd frontend
 flutter analyze
 ```
+Tidak boleh ada **error** (warning boleh). Belum pernah dijalankan sama sekali — tidak ada Flutter SDK di environment kerja Claude.
 
-Tidak boleh ada **error** (warning boleh). Catat hasilnya.
+### 4.2 Test skenario error onboarding
 
-**Menyelesaikan:** sisa acceptance criteria S0-14.
+| Skenario | Cara memicu | Expected |
+|----------|------------|----------|
+| User cancel biometrik | Tap cancel di prompt | Snackbar: "Verifikasi dibatalkan. Coba lagi ketika siap." |
+| Network error | Matikan internet saat tap "Buat akun" | Snackbar: "Koneksi terputus. Cek internet lalu coba lagi." |
+| Backend error 500 | Matikan Railway sementara | Snackbar pesan generic, bukan stack trace |
+
+### 4.3 Test skenario error send
+
+| Skenario | Cara memicu | Expected |
+|----------|------------|----------|
+| Cancel biometrik saat konfirmasi kirim | Tap cancel di Face ID prompt | Kembali ke `SendReviewScreen`, Snackbar error |
+| Network error saat build/submit tx | Matikan internet di titik itu | Snackbar error sesuai |
+| **Saldo tidak cukup** | Kirim nominal > saldo | **Sudah diperbaiki** — backend sekarang balas `400 {"error": "Saldo tidak cukup"}` eksplisit sebelum sempat bangun tx (sebelumnya keluar sebagai error 500 generic) |
+
+Untuk semua skenario: user harus bisa retry (tombol tidak stuck disabled), dan tidak ada istilah teknis ("Exception", "Error 500") yang tampil ke user.
 
 ---
 
-## 6. Update dokumentasi setelah semua di atas selesai
+## 🟢 PRIORITAS 5 — Persiapan demo panggung
 
-Setelah langkah 1-5 selesai dan lolos, update `sprint/sprint-0-foundation.md`:
-- Checklist Definition of Done di bagian atas — centang yang sudah terverifikasi.
-- Status tiap issue (S0-02, S0-04, S0-06, S0-07, S0-08, S0-13, S0-14) dari `ON GOING` → `FINISHED`.
-- Tambah baris baru di tabel **Sprint Log** dengan tanggal & hasil verifikasi aktual (bukan asumsi).
-- Kalau ada blocker baru yang ditemukan (misal Team ID free tier ternyata tidak jalan), catat di **Blockers & Catatan**.
+**[Referensi: `sprint/sprint-4-polish-demo.md` — seluruh isi]**
 
-Sprint 0 baru benar-benar selesai (`DoD` semua tercentang) setelah item terakhir ini — passkey biometrik biasa muncul di device fisik iOS **dan** Android.
+**Prasyarat:** Prioritas 1–4 lolos minimal sekali.
+
+### 5.1 Invisible-crypto checklist final (S4-01)
+
+Grep forbidden-words sudah dijalankan berkali-kali dan **konsisten bersih**:
+```bash
+grep -r "crypto\|wallet\|seed phrase\|gas\|XLM\|USDC\|blockchain\|token\|contract address\|private key\|public key\|RP_ID\|secp256r1" \
+  frontend/lib/screens/ frontend/lib/widgets/ --include="*.dart" -i
+```
+8/10 item checklist build-plan §4 sudah terverifikasi dari code review. 2 sisa yang **butuh device fisik**: label relying-party name yang benar-benar muncul di prompt biometrik OS, dan durasi onboarding aktual (target < 30 detik).
+
+### 5.2 Scan copy Bahasa Indonesia lengkap (S4-03)
+
+`ReceiveScreen` sudah di-scan & diperbaiki (sebelumnya 100% bahasa Inggris). Screen lain (Onboarding, Home, Send*) **belum di-scan ulang manual satu-per-satu** di sesi terakhir — kemungkinan besar masih akurat, tapi perlu dikonfirmasi visual di device.
+
+### 5.3 Dry run demo script (S4-05) — **3x sesuai checklist asli**
+
+Script sudah final (lihat `sprint/sprint-4-polish-demo.md` § S4-05 untuk teks lengkap per babak). Ringkasan alur: masalah (15s) → onboarding live (30s) → kirim uang live (45s) → sisi penerima (20s, tunjukkan `ReceiveScreen` Rani Putri) → reveal teknis (30s) → tutup (20s). Total target ≤ 4 menit.
+
+1. Dry run 1: presenter baca script sambil demo — ukur waktu
+2. Dry run 2: presenter hafal poin utama, tanpa baca script
+3. Dry run 3: demo dengan audience 1 orang, tanya Q&A (lihat tabel "Antisipasi Pertanyaan Juri" di sprint doc)
+
+### 5.4 Rekam video backup (S4-06)
+
+**Wajib ada sebelum hari-H** — testnet bisa flaky. Rekam 1 run penuh mengikuti script final (5.3), simpan minimal di 2 tempat (lokal + cloud).
+
+### 5.5 Final E2E test — 2 device Android
+
+**[Referensi: `sprint/sprint-4-polish-demo.md` § S4-09]**
+
+Bukan lagi iOS+Android — **2 Android**. Setup: DND on, brightness max, no notifikasi, backend sudah di-warmup (5.7). Uninstall+install ulang app di kedua device, jalankan script demo penuh.
+
+### 5.6 Slide deck alignment (S4-10)
+
+Di luar kapasitas teknis (bukan file kode) — tapi **koreksi wajib**: kalau ada slide yang menyebut "Launchtube" di bagian tech stack, ganti ke **"OpenZeppelin Channels"** (Launchtube deprecated & tidak dipakai sama sekali, S0-11).
+
+### 5.7 Warmup backend hari-H (S4-11)
+
+```bash
+curl https://menantuidaman-stellarapachackathon-production.up.railway.app/health
+```
+Jalankan ~5 menit sebelum demo mulai (Railway container bisa "tidur" kalau idle lama, cold start 30-60 detik). Terakhir dites 2026-07-16: 0,47 detik — sehat, tapi itu snapshot satu waktu, tetap warmup ulang di hari-H.
+
+---
+
+## ⚪ OPSIONAL — iOS (di-skip permanen, tapi didokumentasikan kalau ingin direvisit)
+
+**[Referensi: `sprint/sprint-0-foundation.md` § S0-07]**
+
+Keputusan tim: skip karena Apple Developer Program berbayar ($99/tahun) tidak tersedia. Kalau suatu saat ingin dihidupkan lagi:
+
+1. Daftar Apple Developer Program → dapat **Team ID** (10 karakter).
+2. Update `backend/public/.well-known/apple-app-site-association` — ganti `TEAM_ID_NANTI_DIISI` jadi Team ID asli.
+3. Update `frontend/ios/Runner.xcodeproj/project.pbxproj` — tambahkan `DEVELOPMENT_TEAM = <TEAM_ID>;` di 3 build config Runner (Debug/Release/Profile), sejajar `CODE_SIGN_ENTITLEMENTS` yang sudah ada.
+4. Commit & push, verifikasi AASA live dengan Team ID benar.
+5. Buka `frontend/ios/Runner.xcworkspace` (bukan `.xcodeproj`) di Xcode → Signing & Capabilities → verifikasi Associated Domains muncul (harusnya otomatis, `Runner.entitlements` sudah ada).
+6. Build & run ke device iOS fisik.
+
+Kalau dihidupkan, S0-07/S1-06/S2-05/S3-03 (semua ditandai `SKIPPED` di sprint doc) perlu diubah statusnya kembali dan dites ulang.
+
+---
+
+## Catatan teknis (bukan blocker, tapi baik untuk diketahui)
+
+Temuan yang tidak mem-blok demo tapi berpotensi membingungkan kalau tidak diketahui sebelumnya:
+
+1. **Fee rate 0%, bukan 0,5%** — `Env.feeRate = 0.0` di `frontend/lib/app/env.dart`, keputusan produk yang disengaja ("nol biaya" demo). Materi lama (dokumen sprint asli, mungkin slide) yang menyebut "Biaya layanan 0,5%" atau "Rp 995.000" sudah tidak akurat.
+2. **Rate konversi USD→IDR (16350) di-duplikasi di 2 tempat** — `backend/src/index.ts` (`USD_TO_IDR`) dan `frontend/lib/app/env.dart` (`Env.usdToIdr`). Saat ini sama persis, tapi kalau salah satu diubah tanpa yang lain, akan drift. Tidak diperbaiki (butuh keputusan arsitektur: single source of truth di mana), cuma dicatat sebagai risiko.
+3. **`txStore` tanpa TTL** — lihat Prioritas 3.4. Low-risk untuk skala demo.
+4. **`ReceiveScreen` bukan screen dinamis** — tidak terikat ke data transaksi manapun (statis, "Rani Putri" / "BCA •••• 4821" hardcoded). Demo script sudah disesuaikan untuk ini (lihat Prioritas 5.3).
+5. **`.env.example` sempat regresi** ke versi lama yang menyebut Launchtube — sudah diperbaiki lagi. Kalau suatu saat melihat file itu menyebut Launchtube/self-relay lagi, itu tandanya ke-overwrite oleh commit lama — cek `git log -- backend/.env.example`.
+
+---
+
+## Definisi "selesai"
+
+Development Kirimin bisa dianggap **selesai** (siap demo) ketika:
+- [ ] Prioritas 0-4 semua lolos minimal sekali di device fisik Android
+- [ ] Dry run demo script (5.3) sudah 3x sesuai checklist, total waktu ≤ 4 menit
+- [ ] Video backup (5.4) sudah direkam & tersimpan di 2 tempat
+- [ ] Final E2E test 2 device (5.5) lolos tanpa intervensi teknis
+- [ ] Minimal 1 anggota tim bisa bawakan demo tanpa melihat catatan
+
+Setelah semua tercentang, update `sprint/sprint-0-foundation.md` s/d `sprint/sprint-4-polish-demo.md` — ganti status `ON GOING`/`TODO` yang relevan jadi `FINISHED`, dan isi baris baru di tiap **Sprint Log** dengan tanggal + hasil verifikasi aktual (bukan asumsi).
